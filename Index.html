@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cachivache — Un poco de todo</title>
+<title>Málaga Reventa — Segunda mano con garantía</title>
 <!--
   NOTA PARA EL DESARROLLADOR:
   Este es un PROTOTIPO. El checkout está simulado (no cobra dinero real).
@@ -15,204 +15,222 @@
     3. Un webhook en tu backend que confirme el pago antes de marcar el pedido como pagado.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#1F1B2E;
-    --ink-2:#2B2440;
-    --paper:#F1E7D3;
-    --paper-2:#E9DBBE;
-    --marigold:#F2A93B;
-    --cherry:#D6483F;
-    --sage:#7C8F5D;
-    --ink-soft:#4A4360;
-    --radius:14px;
+    --ink:#161B1E;
+    --ink-soft:#5B6469;
+    --paper:#FAFAF7;
+    --line:#E2E2DB;
+    --panel:#FFFFFF;
+    --teal:#1B4B47;
+    --teal-dark:#0F332F;
+    --brass:#A9782F;
+    --radius:10px;
   }
   *{box-sizing:border-box;}
   body{margin:0;}
   html{scroll-behavior:smooth;}
   body{
-    background:var(--ink);
-    color:var(--paper);
-    font-family:'Work Sans',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
     min-height:100vh;
   }
   h1,h2,h3,.display{
-    font-family:'Anton',sans-serif;
-    font-weight:400;
-    letter-spacing:0.5px;
-    text-transform:uppercase;
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
   }
-  .stamp{
-    font-family:'Space Mono',monospace;
-  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
   a{color:inherit;}
   button{font-family:inherit;cursor:pointer;}
-  :focus-visible{outline:3px solid var(--marigold);outline-offset:3px;}
+  :focus-visible{outline:3px solid var(--brass);outline-offset:2px;}
 
-  /* ---------- Header / Signage ---------- */
+  /* ---------- Header ---------- */
   header{
     position:sticky;top:0;z-index:20;
-    background:var(--ink);
-    border-bottom:4px solid var(--marigold);
-    padding:18px 24px;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    padding:18px 32px;
     display:flex;align-items:center;justify-content:space-between;gap:16px;
   }
   .logo{
-    font-size:clamp(28px,5vw,40px);
-    color:var(--paper);
-    display:flex;align-items:baseline;gap:10px;
-  }
-  .logo span.dot{color:var(--cherry);}
-  .cart-btn{
-    background:var(--marigold);
+    font-size:clamp(20px,3vw,26px);
     color:var(--ink);
-    border:none;
-    border-radius:999px;
-    padding:12px 20px;
-    font-size:15px;
-    font-weight:600;
-    display:flex;align-items:center;gap:8px;
-    transition:transform .15s ease;
+    display:flex;align-items:baseline;gap:2px;
   }
-  .cart-btn:hover{transform:translateY(-2px) rotate(-1deg);}
+  .logo .accent{color:var(--teal);}
+  .header-tag{
+    font-size:12px;color:var(--ink-soft);
+    margin-left:14px;
+    padding-left:14px;
+    border-left:1px solid var(--line);
+    display:none;
+  }
+  @media(min-width:640px){ .header-tag{display:inline;} }
+  .cart-btn{
+    background:var(--teal);
+    color:#fff;
+    border:none;
+    border-radius:8px;
+    padding:11px 18px;
+    font-size:14px;
+    font-weight:600;
+    display:flex;align-items:center;gap:9px;
+    transition:background .15s ease;
+  }
+  .cart-btn:hover{background:var(--teal-dark);}
   .cart-count{
-    background:var(--cherry);
-    color:var(--paper);
+    background:rgba(255,255,255,0.18);
     border-radius:999px;
-    padding:2px 9px;
-    font-family:'Space Mono',monospace;
-    font-size:13px;
+    padding:1px 8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
   }
 
   /* ---------- Hero ---------- */
   .hero{
-    padding:70px 24px 50px;
+    padding:76px 32px 56px;
     text-align:center;
-    background:
-      radial-gradient(circle at 20% 20%, rgba(242,169,59,0.12), transparent 40%),
-      radial-gradient(circle at 80% 30%, rgba(214,72,63,0.10), transparent 40%);
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--brass);
+    font-weight:600;
+    margin-bottom:16px;
   }
   .hero h1{
-    font-size:clamp(42px,9vw,88px);
-    line-height:0.95;
-    margin:0 0 14px;
-    color:var(--paper);
+    font-size:clamp(38px,7vw,64px);
+    line-height:1.03;
+    margin:0 0 18px;
+    color:var(--ink);
   }
   .hero h1 em{
-    font-style:normal;
-    color:var(--marigold);
+    font-style:italic;
+    color:var(--teal);
   }
   .hero p{
-    font-size:clamp(16px,2vw,19px);
-    color:var(--paper-2);
+    font-size:clamp(15px,1.6vw,18px);
+    color:var(--ink-soft);
     max-width:520px;
     margin:0 auto;
+    line-height:1.55;
   }
-  .hero .stamp{
-    display:inline-block;
-    margin-top:22px;
-    font-size:12px;
-    letter-spacing:2px;
-    color:var(--sage);
-    border:1px dashed var(--sage);
-    padding:6px 14px;
-    border-radius:999px;
-    transform:rotate(-2deg);
+  .trust-row{
+    display:flex;justify-content:center;gap:28px;
+    margin-top:32px;flex-wrap:wrap;
   }
+  .trust-item{
+    font-size:13px;color:var(--ink-soft);
+    display:flex;align-items:center;gap:7px;
+  }
+  .trust-item svg{width:16px;height:16px;flex-shrink:0;color:var(--teal);}
 
   /* ---------- Category tabs ---------- */
   .tabs{
-    display:flex;flex-wrap:wrap;gap:10px;
+    display:flex;flex-wrap:wrap;gap:8px;
     justify-content:center;
-    padding:0 24px 40px;
+    padding:28px 32px;
+    border-bottom:1px solid var(--line);
   }
   .tab{
     background:transparent;
-    border:2px solid var(--paper-2);
-    color:var(--paper);
-    padding:9px 18px;
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    padding:8px 16px;
     border-radius:999px;
-    font-size:14px;
+    font-size:13px;
     font-weight:500;
     transition:all .15s ease;
   }
-  .tab:hover{border-color:var(--marigold);}
+  .tab:hover{border-color:var(--teal);color:var(--ink);}
   .tab.active{
-    background:var(--paper);
-    color:var(--ink);
-    border-color:var(--paper);
+    background:var(--ink);
+    color:#fff;
+    border-color:var(--ink);
   }
 
   /* ---------- Product grid ---------- */
   .grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
-    gap:26px;
-    padding:0 24px 80px;
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:22px;
+    padding:36px 32px 90px;
     max-width:1200px;
     margin:0 auto;
   }
   .card{
-    background:var(--paper);
-    color:var(--ink);
+    background:var(--panel);
+    border:1px solid var(--line);
     border-radius:var(--radius);
     padding:20px 18px 18px;
-    position:relative;
-    transition:transform .18s ease, box-shadow .18s ease;
-    box-shadow:0 0 0 rgba(0,0,0,0);
+    transition:box-shadow .18s ease, transform .18s ease;
+    display:flex;flex-direction:column;
   }
   .card:hover{
-    transform:translateY(-4px) rotate(-0.6deg);
-    box-shadow:8px 10px 0 rgba(0,0,0,0.25);
+    box-shadow:0 8px 20px rgba(22,27,30,0.08);
+    transform:translateY(-2px);
   }
-  .card .icon{
-    font-size:44px;
-    display:block;
-    margin-bottom:14px;
+  .card-top{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:16px;
+  }
+  .icon-badge{
+    width:38px;height:38px;border-radius:8px;
+    background:#EEF2EF;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--teal);
+  }
+  .icon-badge svg{width:19px;height:19px;}
+  .condition{
+    font-size:11px;font-weight:600;
+    color:var(--teal);
+    background:#EEF2EF;
+    padding:4px 9px;border-radius:999px;
   }
   .card h3{
-    font-family:'Work Sans',sans-serif;
-    text-transform:none;
+    font-family:'Inter',sans-serif;
     font-weight:600;
-    font-size:17px;
-    margin:0 0 6px;
+    font-size:15.5px;
+    margin:0 0 4px;
     letter-spacing:0;
+    color:var(--ink);
   }
   .card .cat{
     font-size:12px;
     color:var(--ink-soft);
-    margin-bottom:14px;
+    margin-bottom:16px;
   }
-  .tag{
-    position:absolute;
-    top:-10px;right:14px;
-    background:var(--cherry);
-    color:var(--paper);
-    font-family:'Space Mono',monospace;
-    font-size:13px;
-    padding:5px 10px;
-    border-radius:4px;
-    transform:rotate(4deg);
-    box-shadow:2px 2px 0 rgba(0,0,0,0.2);
+  .card-foot{
+    margin-top:auto;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;
+  }
+  .price{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:16px;font-weight:500;
+    color:var(--ink);
   }
   .add-btn{
-    width:100%;
     background:var(--ink);
-    color:var(--paper);
+    color:#fff;
     border:none;
-    border-radius:8px;
-    padding:11px;
-    font-size:14px;
+    border-radius:7px;
+    padding:9px 14px;
+    font-size:13px;
     font-weight:600;
     transition:background .15s ease;
   }
-  .add-btn:hover{background:var(--sage);}
+  .add-btn:hover{background:var(--teal);}
 
   /* ---------- Cart drawer ---------- */
   .overlay{
     position:fixed;inset:0;
-    background:rgba(0,0,0,0.5);
+    background:rgba(15,20,22,0.45);
     opacity:0;pointer-events:none;
     transition:opacity .2s ease;
     z-index:30;
@@ -221,101 +239,114 @@
   .drawer{
     position:fixed;top:0;right:0;bottom:0;
     width:min(420px,100%);
-    background:var(--paper);
+    background:var(--panel);
     color:var(--ink);
     z-index:40;
     transform:translateX(100%);
     transition:transform .25s ease;
     display:flex;flex-direction:column;
+    border-left:1px solid var(--line);
   }
   .drawer.open{transform:translateX(0);}
   .drawer-head{
-    padding:22px;
-    border-bottom:2px solid var(--paper-2);
+    padding:22px 24px;
+    border-bottom:1px solid var(--line);
     display:flex;justify-content:space-between;align-items:center;
   }
-  .drawer-head h2{font-size:22px;}
+  .drawer-head h2{font-size:20px;}
   .close-btn{
-    background:none;border:none;font-size:22px;color:var(--ink);
+    background:none;border:none;font-size:20px;color:var(--ink-soft);
   }
-  .drawer-items{flex:1;overflow-y:auto;padding:16px 22px;}
+  .drawer-items{flex:1;overflow-y:auto;padding:8px 24px;}
   .item{
     display:flex;gap:12px;
-    padding:14px 0;
-    border-bottom:1px solid var(--paper-2);
+    padding:16px 0;
+    border-bottom:1px solid var(--line);
   }
-  .item .icon{font-size:30px;}
+  .item .icon-badge{width:34px;height:34px;}
+  .item .icon-badge svg{width:17px;height:17px;}
   .item-info{flex:1;}
-  .item-info h4{margin:0 0 4px;font-size:15px;}
-  .qty-row{display:flex;align-items:center;gap:10px;margin-top:6px;}
+  .item-info h4{margin:0 0 4px;font-size:14px;font-weight:600;}
+  .qty-row{display:flex;align-items:center;gap:10px;margin-top:8px;}
   .qty-row button{
-    background:var(--ink);color:var(--paper);
-    border:none;width:24px;height:24px;border-radius:50%;font-size:14px;line-height:1;
+    background:var(--paper);color:var(--ink);
+    border:1px solid var(--line);width:24px;height:24px;border-radius:50%;font-size:14px;line-height:1;
   }
-  .qty-row .stamp{font-size:13px;}
+  .qty-row .mono{font-size:13px;}
   .remove-link{
-    background:none;border:none;color:var(--cherry);font-size:12px;
-    text-decoration:underline;margin-top:6px;padding:0;
+    background:none;border:none;color:var(--ink-soft);font-size:12px;
+    text-decoration:underline;margin-top:8px;padding:0;
   }
-  .empty-msg{padding:40px 10px;text-align:center;color:var(--ink-soft);}
+  .empty-msg{padding:50px 10px;text-align:center;color:var(--ink-soft);font-size:14px;}
   .drawer-foot{
-    padding:20px 22px 26px;
-    border-top:2px solid var(--paper-2);
+    padding:20px 24px 26px;
+    border-top:1px solid var(--line);
   }
   .subtotal-row{
     display:flex;justify-content:space-between;
-    font-family:'Space Mono',monospace;
-    font-size:17px;margin-bottom:14px;
+    font-size:15px;margin-bottom:14px;
   }
+  .subtotal-row .mono{font-size:17px;font-weight:500;}
   .checkout-btn{
     width:100%;
-    background:var(--cherry);
-    color:var(--paper);
+    background:var(--teal);
+    color:#fff;
     border:none;border-radius:8px;
-    padding:14px;font-size:15px;font-weight:600;
+    padding:14px;font-size:14px;font-weight:600;
+    transition:background .15s ease;
   }
-  .checkout-btn:disabled{background:var(--paper-2);color:var(--ink-soft);cursor:not-allowed;}
+  .checkout-btn:hover:not(:disabled){background:var(--teal-dark);}
+  .checkout-btn:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed;}
 
   /* ---------- Checkout modal ---------- */
   .modal-overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,0.6);
+    position:fixed;inset:0;background:rgba(15,20,22,0.5);
     display:none;align-items:center;justify-content:center;
     z-index:50;padding:20px;
   }
   .modal-overlay.open{display:flex;}
   .modal{
-    background:var(--paper);color:var(--ink);
+    background:var(--panel);color:var(--ink);
     border-radius:var(--radius);
     max-width:420px;width:100%;
-    padding:28px;
+    padding:30px;
     max-height:90vh;overflow-y:auto;
+    border:1px solid var(--line);
   }
-  .modal h2{font-size:24px;margin:0 0 4px;}
-  .modal .stamp{font-size:12px;color:var(--ink-soft);}
+  .modal h2{font-size:22px;margin:0 0 6px;}
+  .modal .mono{font-size:13px;color:var(--ink-soft);}
   .field{margin-top:16px;}
-  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
   .field input{
     width:100%;padding:10px 12px;
-    border:2px solid var(--paper-2);border-radius:8px;
-    font-family:inherit;font-size:14px;background:#fff;color:var(--ink);
+    border:1px solid var(--line);border-radius:7px;
+    font-family:inherit;font-size:14px;background:var(--paper);color:var(--ink);
   }
-  .field input:focus{border-color:var(--marigold);outline:none;}
+  .field input:focus{border-color:var(--teal);outline:none;}
   .pay-note{
-    margin-top:18px;font-size:12px;color:var(--ink-soft);
-    background:var(--paper-2);padding:10px 12px;border-radius:8px;
+    margin-top:20px;font-size:12.5px;color:var(--ink-soft);
+    background:var(--paper);border:1px solid var(--line);
+    padding:12px 14px;border-radius:8px;
+    line-height:1.5;
   }
   .confirm-btn{
     width:100%;margin-top:20px;
-    background:var(--ink);color:var(--paper);
-    border:none;border-radius:8px;padding:14px;font-weight:600;font-size:15px;
+    background:var(--ink);color:#fff;
+    border:none;border-radius:8px;padding:14px;font-weight:600;font-size:14px;
+    transition:background .15s ease;
   }
-  .success{text-align:center;padding:10px 0;}
-  .success .icon{font-size:52px;display:block;margin-bottom:10px;}
+  .confirm-btn:hover{background:var(--teal-dark);}
+  .success{text-align:center;padding:8px 0;}
+  .success .icon-badge{
+    width:52px;height:52px;margin:0 auto 16px;
+  }
+  .success .icon-badge svg{width:26px;height:26px;}
 
   footer{
-    text-align:center;padding:30px 20px 40px;
+    text-align:center;padding:34px 20px 44px;
     color:var(--ink-soft);
-    background:var(--paper);
+    background:var(--panel);
+    border-top:1px solid var(--line);
     font-size:13px;
   }
 
@@ -327,16 +358,24 @@
 <body>
 
 <header>
-  <div class="logo">Cachivache<span class="dot">.</span></div>
+  <div style="display:flex;align-items:center;">
+    <div class="logo">Málaga <span class="accent">Reventa</span></div>
+    <span class="header-tag">Segunda mano verificada</span>
+  </div>
   <button class="cart-btn" id="openCart" aria-haspopup="dialog">
-    🧺 Bolsa <span class="cart-count stamp" id="cartCount">0</span>
+    Bolsa <span class="cart-count mono" id="cartCount">0</span>
   </button>
 </header>
 
 <section class="hero">
-  <h1>Un poco de <em>todo</em>,<br>con mucho carácter</h1>
-  <p>Objetos elegidos uno por uno: ropa, cosas para la casa, tecnología y hallazgos que no vas a encontrar en cualquier lado.</p>
-  <span class="stamp">EDICIÓN DE PROTOTIPO · PRECIOS DE MUESTRA</span>
+  <div class="eyebrow">Málaga · Compra y venta de segunda mano</div>
+  <h1>Cosas buenas que<br>ya tienen <em>una historia</em></h1>
+  <p>Ropa, hogar, tecnología y piezas únicas, revisadas una por una antes de llegar a ti.</p>
+  <div class="trust-row">
+    <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>Artículos revisados</span>
+    <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Pago seguro con Stripe</span>
+    <span class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Envíos desde Málaga</span>
+  </div>
 </section>
 
 <nav class="tabs" id="tabs"></nav>
@@ -352,7 +391,7 @@
   </div>
   <div class="drawer-items" id="drawerItems"></div>
   <div class="drawer-foot">
-    <div class="subtotal-row"><span>Subtotal</span><span id="subtotal">$0</span></div>
+    <div class="subtotal-row"><span>Subtotal</span><span class="mono" id="subtotal">0 €</span></div>
     <button class="checkout-btn" id="checkoutBtn" disabled>Finalizar compra</button>
   </div>
 </aside>
@@ -361,26 +400,34 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
-<footer>Cachivache — prototipo de tienda. El pago con Stripe está simulado en esta demo.</footer>
+<footer>Málaga Reventa — prototipo de tienda. El pago con Stripe está simulado en esta demo.</footer>
 
 <script>
+  const ICONS = {
+    'Ropa': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4l4 3-2 3-2-1v11H8V9L6 10 4 7l4-3 2 2h4l2-2z"/></svg>',
+    'Hogar': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
+    'Tecnología': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+    'Hecho a mano': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>',
+    'Curiosidades': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 6.8L21 12l-6.6 3.2L12 22l-2.4-6.8L3 12l6.6-3.2z"/></svg>'
+  };
+
   const productos = [
-    {id:1, nombre:'Camiseta "Bloque de Color"', cat:'Ropa', precio:24, icono:'👕'},
-    {id:2, nombre:'Gorra de lona cruda', cat:'Ropa', precio:18, icono:'🧢'},
-    {id:3, nombre:'Calcetines a rayas (x3)', cat:'Ropa', precio:12, icono:'🧦'},
-    {id:4, nombre:'Jarra de cerámica pintada a mano', cat:'Hogar', precio:32, icono:'🏺'},
-    {id:5, nombre:'Vela "Tarde de domingo"', cat:'Hogar', precio:16, icono:'🕯️'},
-    {id:6, nombre:'Posavasos de corcho (set)', cat:'Hogar', precio:14, icono:'🪵'},
-    {id:7, nombre:'Cargador portátil 10000mAh', cat:'Tecnología', precio:28, icono:'🔋'},
-    {id:8, nombre:'Soporte de bambú para laptop', cat:'Tecnología', precio:22, icono:'💻'},
-    {id:9, nombre:'Audífonos inalámbricos', cat:'Tecnología', precio:35, icono:'🎧'},
-    {id:10, nombre:'Bolso tejido a crochet', cat:'Hecho a mano', precio:38, icono:'👜'},
-    {id:11, nombre:'Aretes de resina con flores', cat:'Hecho a mano', precio:15, icono:'💐'},
-    {id:12, nombre:'Cuaderno encuadernado a mano', cat:'Hecho a mano', precio:19, icono:'📓'},
-    {id:13, nombre:'Set de canicas vintage', cat:'Curiosidades', precio:10, icono:'🔮'},
-    {id:14, nombre:'Lupa de latón', cat:'Curiosidades', precio:17, icono:'🔍'},
-    {id:15, nombre:'Postales ilustradas (x8)', cat:'Curiosidades', precio:9, icono:'✉️'},
-    {id:16, nombre:'Rompecabezas de madera', cat:'Curiosidades', precio:21, icono:'🧩'},
+    {id:1, nombre:'Camisa vaquera vintage', cat:'Ropa', precio:22, estado:'Buen estado'},
+    {id:2, nombre:'Gorra de lona', cat:'Ropa', precio:14, estado:'Como nueva'},
+    {id:3, nombre:'Jersey de lana (talla M)', cat:'Ropa', precio:19, estado:'Buen estado'},
+    {id:4, nombre:'Jarra de cerámica pintada', cat:'Hogar', precio:26, estado:'Como nueva'},
+    {id:5, nombre:'Lámpara de mesa años 70', cat:'Hogar', precio:38, estado:'Buen estado'},
+    {id:6, nombre:'Set de posavasos de corcho', cat:'Hogar', precio:11, estado:'Nuevo'},
+    {id:7, nombre:'Cargador portátil 10000mAh', cat:'Tecnología', precio:24, estado:'Como nuevo'},
+    {id:8, nombre:'Soporte de bambú para portátil', cat:'Tecnología', precio:18, estado:'Buen estado'},
+    {id:9, nombre:'Audífonos inalámbricos', cat:'Tecnología', precio:32, estado:'Como nuevos'},
+    {id:10, nombre:'Bolso tejido a crochet', cat:'Hecho a mano', precio:34, estado:'Nuevo'},
+    {id:11, nombre:'Aretes de resina artesanales', cat:'Hecho a mano', precio:13, estado:'Nuevo'},
+    {id:12, nombre:'Cuaderno encuadernado a mano', cat:'Hecho a mano', precio:16, estado:'Nuevo'},
+    {id:13, nombre:'Cámara analógica funcional', cat:'Curiosidades', precio:45, estado:'Buen estado'},
+    {id:14, nombre:'Lupa de latón antigua', cat:'Curiosidades', precio:15, estado:'Buen estado'},
+    {id:15, nombre:'Colección de postales', cat:'Curiosidades', precio:8, estado:'Buen estado'},
+    {id:16, nombre:'Rompecabezas de madera', cat:'Curiosidades', precio:17, estado:'Como nuevo'},
   ];
 
   const categorias = ['Todos', ...new Set(productos.map(p => p.cat))];
@@ -415,11 +462,16 @@
     const lista = filtro==='Todos' ? productos : productos.filter(p=>p.cat===filtro);
     grid.innerHTML = lista.map(p => `
       <div class="card">
-        <span class="tag stamp">$${p.precio}</span>
-        <span class="icon">${p.icono}</span>
+        <div class="card-top">
+          <span class="icon-badge">${ICONS[p.cat]}</span>
+          <span class="condition">${p.estado}</span>
+        </div>
         <h3>${p.nombre}</h3>
         <div class="cat">${p.cat}</div>
-        <button class="add-btn" data-id="${p.id}">Añadir a la bolsa</button>
+        <div class="card-foot">
+          <span class="price">${p.precio} €</span>
+          <button class="add-btn" data-id="${p.id}">Añadir</button>
+        </div>
       </div>
     `).join('');
     grid.querySelectorAll('.add-btn').forEach(btn=>{
@@ -427,8 +479,8 @@
         const id = Number(btn.dataset.id);
         carrito[id] = (carrito[id]||0) + 1;
         actualizarCarrito();
-        btn.textContent = 'Añadido ✓';
-        setTimeout(()=>{ btn.textContent = 'Añadir a la bolsa'; }, 900);
+        btn.textContent = 'Añadido';
+        setTimeout(()=>{ btn.textContent = 'Añadir'; }, 900);
       });
     });
   }
@@ -444,7 +496,7 @@
     if(ids.length===0){
       drawerItems.innerHTML = `<div class="empty-msg">Tu bolsa está vacía.<br>Explora el catálogo y añade algo.</div>`;
       checkoutBtn.disabled = true;
-      subtotalEl.textContent = '$0';
+      subtotalEl.textContent = '0 €';
       return;
     }
     checkoutBtn.disabled = false;
@@ -455,21 +507,21 @@
       subtotal += p.precio * cant;
       return `
         <div class="item">
-          <span class="icon">${p.icono}</span>
+          <span class="icon-badge">${ICONS[p.cat]}</span>
           <div class="item-info">
             <h4>${p.nombre}</h4>
             <div class="qty-row">
               <button data-id="${id}" data-action="menos" aria-label="Restar">−</button>
-              <span class="stamp">${cant}</span>
+              <span class="mono">${cant}</span>
               <button data-id="${id}" data-action="mas" aria-label="Sumar">+</button>
             </div>
             <button class="remove-link" data-id="${id}" data-action="quitar">Quitar</button>
           </div>
-          <div class="stamp">$${p.precio * cant}</div>
+          <div class="mono">${p.precio * cant} €</div>
         </div>
       `;
     }).join('');
-    subtotalEl.textContent = '$' + subtotal;
+    subtotalEl.textContent = subtotal + ' €';
 
     drawerItems.querySelectorAll('button[data-action]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -506,7 +558,7 @@
     },0);
     modalContent.innerHTML = `
       <h2>Finalizar compra</h2>
-      <div class="stamp">Total a pagar: $${subtotal}</div>
+      <div class="mono">Total a pagar: ${subtotal} €</div>
       <div class="field">
         <label for="nombre">Nombre completo</label>
         <input id="nombre" type="text" placeholder="Tu nombre">
@@ -519,7 +571,7 @@
         <label for="direccion">Dirección de envío</label>
         <input id="direccion" type="text" placeholder="Calle, número, ciudad">
       </div>
-      <div class="pay-note">💳 Pago con tarjeta vía Stripe — en esta demo el cobro está simulado, no se procesa ningún pago real.</div>
+      <div class="pay-note">Pago con tarjeta vía Stripe. En esta demo el cobro está simulado — no se procesa ningún pago real.</div>
       <button class="confirm-btn" id="confirmarPago">Confirmar pedido (simulado)</button>
     `;
     modalOverlay.classList.add('open');
@@ -529,9 +581,11 @@
   function simularPago(){
     modalContent.innerHTML = `
       <div class="success">
-        <span class="icon">🎉</span>
-        <h2>¡Pedido simulado con éxito!</h2>
-        <p style="color:var(--ink-soft)">Así se vería la confirmación. Cuando conectes Stripe de verdad, aquí se mostraría el número de orden real.</p>
+        <span class="icon-badge" style="background:#EEF2EF;margin-left:auto;margin-right:auto;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#1B4B47;"><path d="M20 6L9 17l-5-5"/></svg>
+        </span>
+        <h2>Pedido simulado con éxito</h2>
+        <p style="color:var(--ink-soft);font-size:14px;">Así se vería la confirmación. Cuando conectes Stripe de verdad, aquí se mostraría el número de orden real.</p>
         <button class="confirm-btn" id="cerrarModal">Cerrar</button>
       </div>
     `;
