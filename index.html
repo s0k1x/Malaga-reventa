@@ -24,7 +24,7 @@
     --line:#333336;
     --white:#F5F4F1;
     --muted:#9A9A97;
-    --accent:#D6303F;
+    --accent:#3D6BD6;
     --accent-portada:#3D6BD6;
     --radius:4px;
   }
@@ -111,7 +111,7 @@
     content:"";
     position:absolute;inset:0;
     background:
-      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(214,48,63,0.14), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(61,107,214,0.16), transparent 60%),
       radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,255,255,0.04), transparent 70%);
     pointer-events:none;
   }
@@ -372,6 +372,14 @@
   }
   .field input::placeholder{color:#5a5a5d;}
   .field input:focus{border-color:var(--white);outline:none;}
+  .field-row{display:flex;gap:12px;}
+  .field-row .field{flex:1;}
+  .pay-divider{
+    margin-top:26px;padding-top:20px;
+    border-top:1px solid var(--line);
+    font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--muted);
+  }
   .pay-note{
     margin-top:20px;font-size:12px;color:var(--muted);
     background:var(--bg);border:1px solid var(--line);
@@ -740,10 +748,42 @@
         <label for="direccion">Dirección de envío</label>
         <input id="direccion" type="text" placeholder="Calle, número, ciudad">
       </div>
-      <div class="pay-note">Pago con tarjeta vía Stripe. En esta demo el cobro está simulado — no se procesa ningún pago real.</div>
+      <div class="pay-divider">Datos de pago</div>
+      <div class="field">
+        <label for="numTarjeta">Número de tarjeta</label>
+        <input id="numTarjeta" type="text" inputmode="numeric" placeholder="1234 1234 1234 1234" maxlength="19">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="caducidad">Caducidad</label>
+          <input id="caducidad" type="text" inputmode="numeric" placeholder="MM/AA" maxlength="5">
+        </div>
+        <div class="field">
+          <label for="cvv">CVV</label>
+          <input id="cvv" type="text" inputmode="numeric" placeholder="123" maxlength="3">
+        </div>
+      </div>
+      <div class="pay-note">Pago con tarjeta vía Stripe. En esta demo el cobro está simulado — no se procesa ningún pago real, no introduzcas datos reales.</div>
       <button class="confirm-btn" id="confirmarPago">Confirmar pedido (simulado)</button>
     `;
     modalOverlay.classList.add('open');
+
+    const numTarjeta = document.getElementById('numTarjeta');
+    numTarjeta.addEventListener('input', ()=>{
+      let v = numTarjeta.value.replace(/\D/g,'').slice(0,16);
+      numTarjeta.value = v.replace(/(.{4})/g,'$1 ').trim();
+    });
+    const caducidad = document.getElementById('caducidad');
+    caducidad.addEventListener('input', ()=>{
+      let v = caducidad.value.replace(/\D/g,'').slice(0,4);
+      if(v.length>=3) v = v.slice(0,2) + '/' + v.slice(2);
+      caducidad.value = v;
+    });
+    const cvv = document.getElementById('cvv');
+    cvv.addEventListener('input', ()=>{
+      cvv.value = cvv.value.replace(/\D/g,'').slice(0,3);
+    });
+
     document.getElementById('confirmarPago').addEventListener('click', simularPago);
   }
 
