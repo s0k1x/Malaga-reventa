@@ -141,12 +141,19 @@
   .logo .thin{color:var(--muted);}
   .header-actions{display:flex;align-items:center;gap:10px;}
   .hamburger-btn{
+    position:relative;
     background:none;border:1px solid var(--line);color:var(--white);
     width:38px;height:38px;display:flex;align-items:center;justify-content:center;
     flex-shrink:0;transition:border-color .15s ease;
   }
   .hamburger-btn:hover{border-color:var(--white);}
   .hamburger-btn svg{width:18px;height:18px;}
+  .hamburger-btn.logged-in::after{
+    content:"";
+    position:absolute;top:-3px;right:-3px;
+    width:10px;height:10px;border-radius:50%;
+    background:var(--accent-portada);border:2px solid var(--bg);
+  }
   .menu-drawer{left:0;right:auto;transform:translateX(-100%);border-left:none;border-right:1px solid var(--line);}
   .menu-drawer.open{transform:translateX(0);}
   .menu-link{
@@ -959,7 +966,6 @@
     <div class="logo">Málaga <span class="thin">Reventa</span></div>
   </div>
   <div class="header-actions">
-    <button class="login-btn" id="openLogin">Iniciar sesión</button>
     <button class="cart-btn" id="openCart" aria-haspopup="dialog">
       Bolsa <span class="cart-count" id="cartCount">0</span>
     </button>
@@ -1998,25 +2004,14 @@
   });
 
   /* ---------- Inicio de sesión de clientes (Firebase Auth real) ---------- */
-  const loginBtn = document.getElementById('openLogin');
+  const hamburgerBtn = document.getElementById('openMenu');
 
   auth.onAuthStateChanged(user=>{
     if(user && user.email !== OWNER_EMAIL){
-      const nombreUsuario = user.email.split('@')[0];
-      loginBtn.innerHTML = `<span class="login-avatar">${nombreUsuario.charAt(0).toUpperCase()}</span><span class="login-name">${nombreUsuario}</span>`;
-      loginBtn.classList.add('logged-in');
+      hamburgerBtn.classList.add('logged-in');
     } else if(!user){
-      loginBtn.textContent = 'Iniciar sesión';
-      loginBtn.classList.remove('logged-in');
+      hamburgerBtn.classList.remove('logged-in');
     }
-  });
-
-  loginBtn.addEventListener('click', ()=>{
-    if(auth.currentUser && auth.currentUser.email !== OWNER_EMAIL){
-      auth.signOut();
-      return;
-    }
-    abrirLoginCliente();
   });
 
   function abrirLoginCliente(){
