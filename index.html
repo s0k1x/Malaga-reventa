@@ -17,7 +17,8 @@
   BASE DE DATOS: Firebase / Firestore.
   1. Ve a https://console.firebase.google.com, crea un proyecto.
   2. Dentro, ve a "Compilación" → "Firestore Database" → crear base de datos.
-  3. Ve a "Compilación" → "Authentication" → método de acceso → activa "Correo electrónico/contraseña".
+  3. Ve a "Compilación" → "Authentication" → método de acceso → activa "Correo electrónico/contraseña" Y TAMBIÉN "Google"
+     (así los clientes pueden crear cuenta real o entrar con Google; para Google no hace falta configurar nada más).
   4. En "Authentication" → "Users", añade manualmente TU usuario (tu email + una contraseña):
      ese es el único usuario que podrá entrar al panel de propietario.
   5. Ve a Configuración del proyecto (el engranaje) → General → baja hasta "Tus apps" →
@@ -53,6 +54,10 @@
   // (Cloudinary → Settings → Upload → Upload presets → Add upload preset → Signing mode: Unsigned)
   const CLOUDINARY_CLOUD_NAME = 'impjfhjy';
   const CLOUDINARY_UPLOAD_PRESET = 'malaga-productos';
+
+  // TU email de propietario — el único que puede entrar al panel.
+  // Tiene que ser EXACTAMENTE el mismo email que usaste en Firebase Authentication → Users.
+  const OWNER_EMAIL = 'malagareventa@gmail.com';
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -617,6 +622,41 @@
   }
   .empty-admin{color:var(--muted);font-size:13.5px;text-align:center;padding:40px 10px;}
 
+  .order-filters{
+    display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;
+  }
+  .order-filter-btn{
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
+  }
+  .order-filter-btn.active{background:var(--white);color:var(--bg);border-color:var(--white);}
+  .order-status-row{
+    display:flex;align-items:center;gap:8px;
+    margin-top:14px;padding-top:14px;border-top:1px solid var(--line);
+  }
+  .order-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .order-status-select{
+    background:var(--bg);border:1px solid var(--line);color:var(--white);
+    padding:7px 10px;font-size:12.5px;font-family:inherit;flex:1;
+  }
+
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line);margin-bottom:8px;
+  }
+  .stat-box{
+    background:var(--bg-2);padding:20px 16px;display:flex;flex-direction:column;gap:6px;
+  }
+  .stat-num{font-family:'Anton',sans-serif;font-size:22px;color:var(--white);}
+  .stat-label{font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;}
+  .bar-row{
+    display:flex;align-items:center;gap:12px;padding:9px 0;
+  }
+  .bar-label{width:38%;font-size:12.5px;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{flex:1;height:8px;background:var(--bg-2);border:1px solid var(--line);}
+  .bar-fill{height:100%;background:var(--accent);}
+  .bar-value{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);min-width:56px;text-align:right;}
+
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important;}
   }
@@ -742,7 +782,7 @@
     <span class="trust-div"></span>
     <span class="trust-item">Pago seguro</span>
     <span class="trust-div"></span>
-    <span class="trust-item">Envío en 24–48h</span>
+    <span class="trust-item">Envío en 1–2 semanas</span>
   </div>
 </section>
 
@@ -783,9 +823,11 @@
   <nav class="admin-tabs">
     <button class="admin-tab active" data-panel="adminProductos">Productos</button>
     <button class="admin-tab" data-panel="adminPedidos">Pedidos</button>
+    <button class="admin-tab" data-panel="adminEstadisticas">Estadísticas</button>
   </nav>
   <div id="adminProductos" class="admin-panel"></div>
   <div id="adminPedidos" class="admin-panel" style="display:none;"></div>
+  <div id="adminEstadisticas" class="admin-panel" style="display:none;"></div>
 </div>
 
 <script>
@@ -1087,23 +1129,28 @@
     if(e.target===modalOverlay) modalOverlay.classList.remove('open');
   });
 
-  /* ---------- Inicio de sesión con email + código ---------- */
-  let usuarioActual = null;
-  let codigoGenerado = null;
+  /* ---------- Inicio de sesión de clientes (Firebase Auth real) ---------- */
   const loginBtn = document.getElementById('openLogin');
 
-  loginBtn.addEventListener('click', ()=>{
-    if(usuarioActual){
-      // Ya hay sesión iniciada: pulsar el botón cierra sesión
-      usuarioActual = null;
+  auth.onAuthStateChanged(user=>{
+    if(user && user.email !== OWNER_EMAIL){
+      loginBtn.textContent = user.email.split('@')[0];
+      loginBtn.classList.add('logged-in');
+    } else if(!user){
       loginBtn.textContent = 'Iniciar sesión';
       loginBtn.classList.remove('logged-in');
-      return;
     }
-    abrirLoginPasoEmail();
   });
 
-  function abrirLoginPasoEmail(){
+  loginBtn.addEventListener('click', ()=>{
+    if(auth.currentUser && auth.currentUser.email !== OWNER_EMAIL){
+      auth.signOut();
+      return;
+    }
+    abrirLoginCliente();
+  });
+
+  function abrirLoginCliente(){
     modalContent.innerHTML = `
       <h2>Iniciar sesión</h2>
       <div class="mono" style="font-size:13px;color:var(--muted);font-weight:600;">Elige cómo quieres entrar</div>
@@ -1112,10 +1159,6 @@
         <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.67-.22-2.45H12v4.63h6.46c-.28 1.5-1.13 2.77-2.4 3.62v3h3.88c2.27-2.09 3.56-5.17 3.56-8.8z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.9l-3.88-3c-1.08.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.72-4.94H1.28v3.1C3.25 21.3 7.31 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.32c-.24-.72-.38-1.49-.38-2.32s.14-1.6.38-2.32V6.58H1.28C.47 8.16 0 9.98 0 12s.47 3.84 1.28 5.42l4-3.1z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.28 6.58l4 3.1c.95-2.83 3.6-4.93 6.72-4.93z"/></svg>
         Continuar con Google
       </button>
-      <button class="social-btn social-apple" id="loginAppleBtn">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16.365 1.43c0 1.14-.415 2.07-1.244 2.79-.94.83-2.06 1.31-3.14 1.22-.14-1.11.41-2.27 1.2-2.98.85-.77 2.13-1.28 3.18-1.03zm3.7 16.87c-.6 1.4-.89 2.02-1.67 3.26-1.08 1.72-2.6 3.86-4.49 3.88-1.68.02-2.11-1.1-4.39-1.09-2.28.01-2.75 1.11-4.43 1.09-1.89-.02-3.33-1.95-4.41-3.67-3.02-4.79-3.34-10.41-1.48-13.4 1.32-2.14 3.4-3.39 5.35-3.39 1.98 0 3.23 1.09 4.87 1.09 1.59 0 2.56-1.09 4.87-1.09 1.74 0 3.58.95 4.9 2.58-4.31 2.36-3.61 8.51.88 10.74z"/></svg>
-        Continuar con Apple
-      </button>
 
       <div class="login-divider">o con tu correo</div>
 
@@ -1123,103 +1166,67 @@
         <label for="loginEmail">Correo electrónico</label>
         <input id="loginEmail" type="email" placeholder="tucorreo@ejemplo.com">
       </div>
+      <div class="field">
+        <label for="loginPass">Contraseña</label>
+        <input id="loginPass" type="password" placeholder="••••••••">
+      </div>
       <div id="loginError" style="display:none;color:var(--accent);font-size:12px;margin-top:8px;font-weight:600;"></div>
-      <button class="confirm-btn" id="enviarCodigoBtn">Enviar código</button>
+      <button class="confirm-btn" id="loginEntrarBtn">Entrar</button>
+      <button class="confirm-btn" id="loginCrearBtn" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--line);">No tengo cuenta — crear una</button>
     `;
     modalOverlay.classList.add('open');
-    document.getElementById('enviarCodigoBtn').addEventListener('click', enviarCodigo);
-    document.getElementById('loginEmail').addEventListener('keydown', (e)=>{
-      if(e.key==='Enter') enviarCodigo();
-    });
-    document.getElementById('loginGoogleBtn').addEventListener('click', ()=>loginSocial('Google', 'nombre@gmail.com'));
-    document.getElementById('loginAppleBtn').addEventListener('click', ()=>loginSocial('Apple', 'nombre@icloud.com'));
-  }
 
-  function loginSocial(proveedor, emailDemo){
-    modalContent.innerHTML = `
-      <h2>Conectando con ${proveedor}…</h2>
-      <div class="mono" style="font-size:13px;color:var(--muted);font-weight:600;">Redirigiendo a ${proveedor} para confirmar tu cuenta</div>
-    `;
-    setTimeout(()=>{
-      usuarioActual = emailDemo;
+    const mostrarError = (msg)=>{
+      const err = document.getElementById('loginError');
+      err.textContent = msg;
+      err.style.display = 'block';
+    };
+    const mostrarExito = (email)=>{
       modalContent.innerHTML = `
         <div class="success">
-          <span class="check">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-          </span>
+          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
           <h2>Sesión iniciada</h2>
-          <p style="color:var(--muted);font-size:13.5px;">Has entrado con ${proveedor} como ${emailDemo}.</p>
-          <div class="pay-note">Demo: en la versión real esto abriría el inicio de sesión oficial de ${proveedor} (OAuth) y necesita registrar la app con ${proveedor} y un backend que valide el token.</div>
+          <p style="color:var(--muted);font-size:13.5px;">Has entrado como ${email}.</p>
           <button class="confirm-btn" id="cerrarLoginModal">Cerrar</button>
         </div>
       `;
-      loginBtn.textContent = emailDemo.split('@')[0];
-      loginBtn.classList.add('logged-in');
-      document.getElementById('cerrarLoginModal').addEventListener('click', ()=>{
-        modalOverlay.classList.remove('open');
+      document.getElementById('cerrarLoginModal').addEventListener('click', ()=> modalOverlay.classList.remove('open'));
+    };
+
+    document.getElementById('loginGoogleBtn').addEventListener('click', ()=>{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).then(cred=>{
+        mostrarExito(cred.user.email);
+      }).catch(err=>{
+        mostrarError('No se pudo entrar con Google: ' + err.message);
       });
-    }, 900);
-  }
-
-  function enviarCodigo(){
-    const email = document.getElementById('loginEmail').value.trim();
-    const errorEl = document.getElementById('loginError');
-    const valido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if(!valido){
-      errorEl.textContent = 'Introduce un correo electrónico válido.';
-      errorEl.style.display = 'block';
-      return;
-    }
-    codigoGenerado = String(Math.floor(100000 + Math.random()*900000));
-    abrirLoginPasoCodigo(email);
-  }
-
-  function abrirLoginPasoCodigo(email){
-    modalContent.innerHTML = `
-      <h2>Confirma tu correo</h2>
-      <div class="mono" style="font-size:13px;color:var(--muted);font-weight:600;">Hemos enviado un código a ${email}</div>
-      <div class="field">
-        <label for="loginCodigo">Código de 6 dígitos</label>
-        <input id="loginCodigo" type="text" inputmode="numeric" maxlength="6" placeholder="000000" class="code-input">
-      </div>
-      <div id="codigoError" style="display:none;color:var(--accent);font-size:12px;margin-top:8px;font-weight:600;"></div>
-      <div class="pay-note">Esto es una demo: como no hay envío de correo real, tu código es <strong style="color:var(--white);">${codigoGenerado}</strong>.</div>
-      <button class="confirm-btn" id="confirmarCodigoBtn">Confirmar código</button>
-      <button class="confirm-btn" id="reenviarCodigoBtn" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--line);">Reenviar código</button>
-    `;
-    document.getElementById('loginCodigo').addEventListener('input', (e)=>{
-      e.target.value = e.target.value.replace(/\D/g,'').slice(0,6);
     });
-    document.getElementById('confirmarCodigoBtn').addEventListener('click', ()=>verificarCodigo(email));
-    document.getElementById('reenviarCodigoBtn').addEventListener('click', ()=>{
-      codigoGenerado = String(Math.floor(100000 + Math.random()*900000));
-      abrirLoginPasoCodigo(email);
-    });
-  }
 
-  function verificarCodigo(email){
-    const input = document.getElementById('loginCodigo').value.trim();
-    const errorEl = document.getElementById('codigoError');
-    if(input !== codigoGenerado){
-      errorEl.textContent = 'Código incorrecto. Revisa los 6 dígitos e inténtalo de nuevo.';
-      errorEl.style.display = 'block';
-      return;
-    }
-    usuarioActual = email;
-    modalContent.innerHTML = `
-      <div class="success">
-        <span class="check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-        </span>
-        <h2>Sesión iniciada</h2>
-        <p style="color:var(--muted);font-size:13.5px;">Has entrado como ${email}.</p>
-        <button class="confirm-btn" id="cerrarLoginModal">Cerrar</button>
-      </div>
-    `;
-    loginBtn.textContent = email.split('@')[0];
-    loginBtn.classList.add('logged-in');
-    document.getElementById('cerrarLoginModal').addEventListener('click', ()=>{
-      modalOverlay.classList.remove('open');
+    document.getElementById('loginEntrarBtn').addEventListener('click', ()=>{
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      if(!email || !pass){ mostrarError('Rellena correo y contraseña.'); return; }
+      auth.signInWithEmailAndPassword(email, pass).then(cred=>{
+        mostrarExito(cred.user.email);
+      }).catch(err=>{
+        mostrarError('No se pudo entrar: correo o contraseña incorrectos.');
+      });
+    });
+
+    document.getElementById('loginCrearBtn').addEventListener('click', ()=>{
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      if(!email || !pass){ mostrarError('Escribe correo y contraseña para crear la cuenta.'); return; }
+      if(pass.length < 6){ mostrarError('La contraseña tiene que tener al menos 6 caracteres.'); return; }
+      auth.createUserWithEmailAndPassword(email, pass).then(cred=>{
+        mostrarExito(cred.user.email);
+      }).catch(err=>{
+        if(err.code === 'auth/email-already-in-use'){
+          mostrarError('Ya existe una cuenta con ese correo — usa "Entrar" en vez de crear una nueva.');
+        } else {
+          mostrarError('No se pudo crear la cuenta: ' + err.message);
+        }
+      });
     });
   }
 
@@ -1232,14 +1239,14 @@
     productos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
     renderTabs();
     renderGrid();
-    if(adminScreen.classList.contains('visible')) renderAdminProductos();
+    if(adminScreen.classList.contains('visible')) { renderAdminProductos(); renderAdminEstadisticas(); }
   }, err=>{
     console.error('Error leyendo productos de Firestore:', err);
   });
 
   db.collection('pedidos').orderBy('timestamp','desc').onSnapshot(snapshot=>{
     pedidos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-    if(adminScreen.classList.contains('visible')) renderAdminPedidos();
+    if(adminScreen.classList.contains('visible')) { renderAdminPedidos(); renderAdminEstadisticas(); }
   }, err=>{
     console.error('Error leyendo pedidos de Firestore:', err);
   });
@@ -1250,11 +1257,12 @@
   const adminPedidosEl = document.getElementById('adminPedidos');
 
   document.getElementById('ownerAccess').addEventListener('click', ()=>{
-    if(auth.currentUser){
+    if(auth.currentUser && auth.currentUser.email === OWNER_EMAIL){
       // Ya está identificado como propietario: entra directo al panel.
       adminScreen.classList.add('visible');
       renderAdminProductos();
       renderAdminPedidos();
+      renderAdminEstadisticas();
       window.scrollTo(0,0);
     } else {
       abrirLoginPropietario();
@@ -1298,11 +1306,18 @@
       const pass = document.getElementById('ownerPass').value;
       const err = document.getElementById('ownerError');
       err.style.display = 'none';
-      auth.signInWithEmailAndPassword(email, pass).then(()=>{
+      auth.signInWithEmailAndPassword(email, pass).then((cred)=>{
+        if(cred.user.email !== OWNER_EMAIL){
+          auth.signOut();
+          err.textContent = 'Esta cuenta no tiene acceso al panel de propietario.';
+          err.style.display = 'block';
+          return;
+        }
         modalOverlay.classList.remove('open');
         adminScreen.classList.add('visible');
         renderAdminProductos();
         renderAdminPedidos();
+        renderAdminEstadisticas();
         window.scrollTo(0,0);
       }).catch(error=>{
         err.textContent = 'No se pudo entrar: correo o contraseña incorrectos.';
@@ -1514,12 +1529,29 @@
     });
   }
 
+  const ESTADOS_PEDIDO = ['Pendiente', 'Enviado', 'Entregado', 'Cancelado'];
+  const ESTADO_COLOR = {
+    'Pendiente': 'var(--muted)',
+    'Enviado': 'var(--accent-portada)',
+    'Entregado': '#3FAE6A',
+    'Cancelado': 'var(--accent)'
+  };
+
+  let filtroEstadoPedidos = 'Todos';
+
   function renderAdminPedidos(){
     if(pedidos.length===0){
       adminPedidosEl.innerHTML = `<div class="empty-admin">Todavía no hay pedidos.<br>En cuanto alguien complete una compra, aparecerá aquí.</div>`;
       return;
     }
-    adminPedidosEl.innerHTML = pedidos.map(pedido => `
+    const filtros = ['Todos', ...ESTADOS_PEDIDO];
+    const lista = filtroEstadoPedidos === 'Todos' ? pedidos : pedidos.filter(p => (p.estado || 'Pendiente') === filtroEstadoPedidos);
+
+    adminPedidosEl.innerHTML = `
+      <div class="order-filters">
+        ${filtros.map(f => `<button class="order-filter-btn ${f===filtroEstadoPedidos?'active':''}" data-estado="${f}">${f}</button>`).join('')}
+      </div>
+      ${lista.length===0 ? `<div class="empty-admin">No hay pedidos con ese estado.</div>` : lista.map(pedido => `
       <div class="order-card">
         <div class="order-head">
           <strong>${pedido.nombre}</strong>
@@ -1530,8 +1562,84 @@
           <div class="order-line"><span>${it.cantidad}× ${it.nombre}</span><span>${formatoPrecio(it.precio*it.cantidad)}</span></div>
         `).join('')}
         <div class="order-total"><span>Total</span><span>${formatoPrecio(pedido.total)}</span></div>
+        <div class="order-status-row">
+          <span class="order-status-dot" style="background:${ESTADO_COLOR[pedido.estado || 'Pendiente']};"></span>
+          <select class="order-status-select" data-id="${pedido.id}">
+            ${ESTADOS_PEDIDO.map(e => `<option value="${e}" ${((pedido.estado||'Pendiente')===e) ? 'selected' : ''}>${e}</option>`).join('')}
+          </select>
+        </div>
       </div>
-    `).join('');
+    `).join('')}
+    `;
+
+    adminPedidosEl.querySelectorAll('.order-filter-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        filtroEstadoPedidos = btn.dataset.estado;
+        renderAdminPedidos();
+      });
+    });
+    adminPedidosEl.querySelectorAll('.order-status-select').forEach(sel=>{
+      sel.addEventListener('change', ()=>{
+        db.collection('pedidos').doc(sel.dataset.id).update({estado: sel.value}).catch(err=>{
+          alert('No se pudo actualizar el estado: ' + err.message);
+        });
+      });
+    });
+  }
+
+  function renderAdminEstadisticas(){
+    const el = document.getElementById('adminEstadisticas');
+    if(pedidos.length===0){
+      el.innerHTML = `<div class="empty-admin">Todavía no hay datos suficientes.<br>Las estadísticas aparecerán en cuanto entren pedidos.</div>`;
+      return;
+    }
+    const totalIngresos = pedidos.reduce((s,p)=>s+p.total,0);
+    const numPedidos = pedidos.length;
+    const ticketMedio = totalIngresos / numPedidos;
+
+    const ventasPorProducto = {};
+    const ingresosPorCategoria = {};
+    pedidos.forEach(p=>{
+      p.items.forEach(it=>{
+        ventasPorProducto[it.nombre] = (ventasPorProducto[it.nombre]||0) + it.cantidad;
+        const prod = productos.find(pr=>pr.nombre===it.nombre);
+        const cat = prod ? prod.cat : 'Otros';
+        ingresosPorCategoria[cat] = (ingresosPorCategoria[cat]||0) + it.precio*it.cantidad;
+      });
+    });
+    const topProductos = Object.entries(ventasPorProducto).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxVentas = topProductos.length ? topProductos[0][1] : 1;
+    const catsOrdenadas = Object.entries(ingresosPorCategoria).sort((a,b)=>b[1]-a[1]);
+    const maxCat = catsOrdenadas.length ? catsOrdenadas[0][1] : 1;
+
+    const pendientes = pedidos.filter(p=>(p.estado||'Pendiente')==='Pendiente').length;
+
+    el.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-box"><span class="stat-num">${formatoPrecio(totalIngresos)}</span><span class="stat-label">Ingresos totales</span></div>
+        <div class="stat-box"><span class="stat-num">${numPedidos}</span><span class="stat-label">Pedidos</span></div>
+        <div class="stat-box"><span class="stat-num">${formatoPrecio(ticketMedio)}</span><span class="stat-label">Ticket medio</span></div>
+        <div class="stat-box"><span class="stat-num">${pendientes}</span><span class="stat-label">Pendientes de enviar</span></div>
+      </div>
+
+      <div class="admin-section-title">Más vendidos</div>
+      ${topProductos.map(([nombre, cant]) => `
+        <div class="bar-row">
+          <span class="bar-label">${nombre}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${(cant/maxVentas)*100}%;"></div></div>
+          <span class="bar-value">${cant}</span>
+        </div>
+      `).join('')}
+
+      <div class="admin-section-title">Ingresos por categoría</div>
+      ${catsOrdenadas.map(([cat, total]) => `
+        <div class="bar-row">
+          <span class="bar-label">${cat}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${(total/maxCat)*100}%;background:var(--accent-portada);"></div></div>
+          <span class="bar-value">${formatoPrecio(total)}</span>
+        </div>
+      `).join('')}
+    `;
   }
 </script>
 </body>
