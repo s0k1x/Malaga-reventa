@@ -170,6 +170,7 @@
     border-color:var(--white);
   }
 
+
   /* ---------- Product grid ---------- */
   .grid{
     display:grid;
@@ -477,8 +478,8 @@
 <div id="introScreen">
   <div class="intro-logo">Málaga <span>Reventa</span></div>
   <span class="eyebrow">Exclusividad · Málaga</span>
-  <h1>Piezas únicas<span class="italic">que ya tienen historia</span></h1>
-  <p>Cada semana, una selección nueva de segunda mano revisada a mano. Entra para ver lo que hay disponible ahora.</p>
+  <h1>Piezas únicas<span class="italic">a precio de acceso</span></h1>
+  <p>Relojes, perfumes y complementos seleccionados. Entra para ver lo que hay disponible ahora.</p>
   <button class="enter-btn" id="enterStore">Entrar</button>
   <div class="enter-hint"><span class="pulse"></span>Nueva selección esta semana</div>
 </div>
@@ -494,8 +495,8 @@
 
 <section class="hero">
   <span class="eyebrow">Málaga · Edición limitada</span>
-  <h1>Segunda mano<span class="italic">con mucho estilo</span></h1>
-  <p>Piezas revisadas una por una. Cada artículo es único y no va a estar disponible para siempre.</p>
+  <h1>Málaga Reventa<span class="italic">a otro precio</span></h1>
+  <p>Relojes, perfumería, complementos y tecnología, seleccionados uno a uno. Stock limitado cada semana.</p>
   <div class="trust-row">
     <span class="trust-item">Vendedores verificados</span>
     <span class="trust-div"></span>
@@ -544,37 +545,32 @@
 
 <script>
   const CAT_TINT = {
-    'Ropa':          'linear-gradient(160deg,#2A1416,#141011)',
-    'Hogar':         'linear-gradient(160deg,#10201E,#101414)',
-    'Tecnología':    'linear-gradient(160deg,#101A26,#101214)',
-    'Hecho a mano':  'linear-gradient(160deg,#241B0E,#141210)',
-    'Curiosidades':  'linear-gradient(160deg,#1B1526,#121013)'
+    'Relojes':      'linear-gradient(160deg,#2A1416,#141011)',
+    'Perfumes':     'linear-gradient(160deg,#1B1526,#121013)',
+    'Complementos': 'linear-gradient(160deg,#241B0E,#141210)',
+    'Ropa':         'linear-gradient(160deg,#10201E,#101414)',
+    'Tecnología':   'linear-gradient(160deg,#101A26,#101214)'
   };
   const ICONS = {
+    'Relojes': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="7"/><path d="M12 9v3l2 2M9 2h6M9 22h6"/></svg>',
+    'Perfumes': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6M10 3v3.5c0 .6-.3 1.1-.8 1.5C8.1 9 7 10.6 7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6c0-2.4-1.1-4-2.2-5-.5-.4-.8-.9-.8-1.5V3"/></svg>',
+    'Complementos': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>',
     'Ropa': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4l4 3-2 3-2-1v11H8V9L6 10 4 7l4-3 2 2h4l2-2z"/></svg>',
-    'Hogar': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>',
-    'Tecnología': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
-    'Hecho a mano': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>',
-    'Curiosidades': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l2.4 6.8L21 12l-6.6 3.2L12 22l-2.4-6.8L3 12l6.6-3.2z"/></svg>'
+    'Tecnología': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'
   };
 
   const productos = [
-    {id:1, nombre:'Camisa vaquera vintage', cat:'Ropa', precio:22, rating:4.9, verificado:true, estado:'Buen estado'},
-    {id:2, nombre:'Gorra de lona', cat:'Ropa', precio:14, rating:4.6, verificado:true, estado:'Como nueva'},
-    {id:3, nombre:'Jersey de lana (talla M)', cat:'Ropa', precio:19, rating:4.7, verificado:false, estado:'Buen estado'},
-    {id:4, nombre:'Jarra de cerámica pintada', cat:'Hogar', precio:26, rating:5.0, verificado:true, estado:'Como nueva'},
-    {id:5, nombre:'Lámpara de mesa años 70', cat:'Hogar', precio:38, rating:4.8, verificado:true, estado:'Buen estado'},
-    {id:6, nombre:'Set de posavasos de corcho', cat:'Hogar', precio:11, rating:4.5, verificado:false, estado:'Nuevo'},
-    {id:7, nombre:'Cargador portátil 10000mAh', cat:'Tecnología', precio:24, rating:4.8, verificado:true, estado:'Como nuevo'},
-    {id:8, nombre:'Soporte de bambú para portátil', cat:'Tecnología', precio:18, rating:4.6, verificado:true, estado:'Buen estado'},
-    {id:9, nombre:'Audífonos inalámbricos', cat:'Tecnología', precio:32, rating:4.9, verificado:true, estado:'Como nuevos'},
-    {id:10, nombre:'Bolso tejido a crochet', cat:'Hecho a mano', precio:34, rating:5.0, verificado:true, estado:'Nuevo'},
-    {id:11, nombre:'Aretes de resina artesanales', cat:'Hecho a mano', precio:13, rating:4.7, verificado:false, estado:'Nuevo'},
-    {id:12, nombre:'Cuaderno encuadernado a mano', cat:'Hecho a mano', precio:16, rating:4.8, verificado:true, estado:'Nuevo'},
-    {id:13, nombre:'Cámara analógica funcional', cat:'Curiosidades', precio:45, rating:4.9, verificado:true, estado:'Buen estado'},
-    {id:14, nombre:'Lupa de latón antigua', cat:'Curiosidades', precio:15, rating:4.6, verificado:false, estado:'Buen estado'},
-    {id:15, nombre:'Colección de postales', cat:'Curiosidades', precio:8, rating:4.5, verificado:false, estado:'Buen estado'},
-    {id:16, nombre:'Rompecabezas de madera', cat:'Curiosidades', precio:17, rating:4.7, verificado:true, estado:'Como nuevo'},
+    {id:1, nombre:'Rolex', cat:'Relojes', precio:129},
+    {id:2, nombre:'Perfume Fame', cat:'Perfumes', precio:40},
+    {id:3, nombre:'Pulsera Lacoste', cat:'Complementos', precio:22.99},
+    {id:4, nombre:'Camiseta de fútbol', cat:'Ropa', precio:15.99},
+    {id:5, nombre:'Perfume Invictus Eau de Toilette', cat:'Perfumes', precio:45},
+    {id:6, nombre:'Perfume Versace Eros Parfum', cat:'Perfumes', precio:43.99},
+    {id:7, nombre:'Valentino Coral Fantasy', cat:'Perfumes', precio:41.99},
+    {id:8, nombre:'Valentino Intense Mujer', cat:'Perfumes', precio:41.99},
+    {id:9, nombre:'One Million Royal', cat:'Perfumes', precio:42.99},
+    {id:10, nombre:'Prada Paradoxe', cat:'Perfumes', precio:40.99},
+    {id:11, nombre:'AirPods Pro 2', cat:'Tecnología', precio:39.99},
   ];
 
   const categorias = ['Todos', ...new Set(productos.map(p => p.cat))];
@@ -605,9 +601,8 @@
     });
   }
 
-  function estrellas(r){
-    const llenas = Math.round(r);
-    return '★'.repeat(llenas) + '☆'.repeat(5-llenas);
+  function formatoPrecio(n){
+    return n.toLocaleString('es-ES', {minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2}) + ' €';
   }
 
   function renderGrid(){
@@ -616,19 +611,13 @@
       <div class="card">
         <div class="card-visual" style="background:${CAT_TINT[p.cat]};">
           <span class="icon-watermark">${ICONS[p.cat]}</span>
-          <span class="condition">${p.estado}</span>
           <div class="scrim"></div>
           <span class="cat-label">${p.cat}</span>
         </div>
         <div class="card-body">
           <h3>${p.nombre}</h3>
-          <div class="meta-row">
-            <span class="stars">${estrellas(p.rating)}</span>
-            <span>${p.rating}</span>
-            ${p.verificado ? `<span class="verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Verificado</span>` : ''}
-          </div>
           <div class="card-foot">
-            <span class="price">${p.precio} €</span>
+            <span class="price">${formatoPrecio(p.precio)}</span>
             <button class="add-btn" data-id="${p.id}">Añadir</button>
           </div>
         </div>
