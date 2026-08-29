@@ -13,7 +13,34 @@
     2. Reemplazar la función simularPago() por una llamada a tu backend
        usando Stripe.js + Stripe Elements para capturar la tarjeta de forma segura.
     3. Un webhook en tu backend que confirme el pago antes de marcar el pedido como pagado.
+
+  BASE DE DATOS: Firebase / Firestore.
+  1. Ve a https://console.firebase.google.com, crea un proyecto.
+  2. Dentro, ve a "Compilación" → "Firestore Database" → crear base de datos.
+  3. Ve a "Compilación" → "Authentication" → método de acceso → activa "Correo electrónico/contraseña".
+  4. En "Authentication" → "Users", añade manualmente TU usuario (tu email + una contraseña):
+     ese es el único usuario que podrá entrar al panel de propietario.
+  5. Ve a Configuración del proyecto (el engranaje) → General → baja hasta "Tus apps" →
+     crea una app web → copia el objeto firebaseConfig y pégalo abajo, sustituyendo el de ejemplo.
+  6. En Firestore → Reglas, pega las reglas de seguridad que te indico en el chat.
 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+  // TODO: sustituye esto por TU configuración real (Firebase Console → Configuración del proyecto → Tus apps)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCjUB_AvtiLHjkidvJ7M9F8JklL-VqFGDc",
+    authDomain: "reventa-malaga.firebaseapp.com",
+    projectId: "reventa-malaga",
+    storageBucket: "reventa-malaga.firebasestorage.app",
+    messagingSenderId: "851623305268",
+    appId: "1:851623305268:web:bdd7e78a2ba144ef9b6a61"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -447,6 +474,86 @@
     color:var(--muted);
     font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
   }
+  .owner-link{
+    background:none;border:none;color:#4a4a4d;
+    font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+    margin-top:14px;padding:6px;text-decoration:underline;
+  }
+  .owner-link:hover{color:var(--muted);}
+
+  /* ---------- Panel del propietario ---------- */
+  #adminScreen{
+    display:none;
+    position:fixed;inset:0;z-index:80;
+    background:var(--bg);
+    overflow-y:auto;
+  }
+  #adminScreen.visible{display:block;}
+  .admin-header{
+    position:sticky;top:0;z-index:5;
+    background:rgba(11,11,12,0.95);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    padding:18px 28px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .admin-tabs{
+    display:flex;gap:26px;padding:0 28px;
+    border-bottom:1px solid var(--line);
+  }
+  .admin-tab{
+    background:none;border:none;border-bottom:2px solid transparent;
+    color:var(--muted);padding:16px 0 14px;
+    font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;
+  }
+  .admin-tab.active{color:var(--white);border-bottom-color:var(--accent-portada);}
+  .admin-panel{padding:28px;max-width:640px;margin:0 auto;}
+  .admin-section-title{
+    font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);
+    font-weight:600;margin:32px 0 14px;
+  }
+  .admin-section-title:first-child{margin-top:0;}
+  .add-product-form{
+    background:var(--bg-2);border:1px solid var(--line);padding:20px;
+  }
+  .add-product-form .field-row{margin-top:16px;}
+  .add-product-form .add-btn{width:100%;margin-top:18px;padding:12px;}
+  .product-row{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 0;border-bottom:1px solid var(--line);
+  }
+  .product-row .p-icon{
+    width:38px;height:38px;flex-shrink:0;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .product-row .p-icon svg{width:18px;height:18px;color:rgba(255,255,255,0.7);}
+  .product-row .p-info{flex:1;}
+  .product-row .p-info h4{margin:0 0 3px;font-size:14px;font-weight:600;}
+  .product-row .p-info span{font-size:11px;color:var(--muted);}
+  .product-row .p-price{font-family:'Anton',sans-serif;font-size:15px;}
+  .product-row .p-delete{
+    background:none;border:1px solid var(--line);color:var(--accent);
+    width:30px;height:30px;font-size:14px;flex-shrink:0;
+  }
+  .order-card{
+    border:1px solid var(--line);padding:18px;margin-bottom:14px;
+  }
+  .order-card .order-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  .order-card .order-head strong{font-size:14px;}
+  .order-card .order-head span{font-size:11px;color:var(--muted);}
+  .order-card .order-line{
+    display:flex;justify-content:space-between;
+    font-size:13px;color:var(--muted);margin-top:6px;
+  }
+  .order-card .order-total{
+    display:flex;justify-content:space-between;
+    margin-top:12px;padding-top:12px;border-top:1px solid var(--line);
+    font-weight:700;color:var(--white);
+  }
+  .empty-admin{color:var(--muted);font-size:13.5px;text-align:center;padding:40px 10px;}
 
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important;}
@@ -599,9 +706,25 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
-<footer>Málaga Reventa — prototipo de tienda. El pago con Stripe está simulado en esta demo.</footer>
+<footer>Málaga Reventa — prototipo de tienda. El pago con Stripe está simulado en esta demo.<br><button id="ownerAccess" class="owner-link">Acceso propietario</button></footer>
 
 </div><!-- /#storeApp -->
+
+<div id="adminScreen">
+  <div class="admin-header">
+    <div class="logo">Panel <span class="thin">Propietario</span></div>
+    <div style="display:flex;gap:10px;">
+      <button class="login-btn" id="signOutAdmin">Cerrar sesión</button>
+      <button class="login-btn" id="closeAdmin">Salir al catálogo</button>
+    </div>
+  </div>
+  <nav class="admin-tabs">
+    <button class="admin-tab active" data-panel="adminProductos">Productos</button>
+    <button class="admin-tab" data-panel="adminPedidos">Pedidos</button>
+  </nav>
+  <div id="adminProductos" class="admin-panel"></div>
+  <div id="adminPedidos" class="admin-panel" style="display:none;"></div>
+</div>
 
 <script>
   const introScreen = document.getElementById('introScreen');
@@ -622,6 +745,7 @@
     'Ropa':         'linear-gradient(160deg,#10201E,#101414)',
     'Tecnología':   'linear-gradient(160deg,#101A26,#101214)'
   };
+  const DEFAULT_TINT = 'linear-gradient(160deg,#1A1A1D,#101012)';
   const ICONS = {
     'Relojes': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="7"/><path d="M12 9v3l2 2M9 2h6M9 22h6"/></svg>',
     'Perfumes': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6M10 3v3.5c0 .6-.3 1.1-.8 1.5C8.1 9 7 10.6 7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6c0-2.4-1.1-4-2.2-5-.5-.4-.8-.9-.8-1.5V3"/></svg>',
@@ -629,22 +753,35 @@
     'Ropa': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4l4 3-2 3-2-1v11H8V9L6 10 4 7l4-3 2 2h4l2-2z"/></svg>',
     'Tecnología': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'
   };
+  const DEFAULT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>';
+  function tintDe(cat){ return CAT_TINT[cat] || DEFAULT_TINT; }
+  function iconoDe(cat){ return ICONS[cat] || DEFAULT_ICON; }
 
-  const productos = [
-    {id:1, nombre:'Rolex', cat:'Relojes', precio:129},
-    {id:2, nombre:'Perfume Fame', cat:'Perfumes', precio:40},
-    {id:3, nombre:'Pulsera Lacoste', cat:'Complementos', precio:22.99},
-    {id:4, nombre:'Camiseta de fútbol', cat:'Ropa', precio:15.99},
-    {id:5, nombre:'Perfume Invictus Eau de Toilette', cat:'Perfumes', precio:45},
-    {id:6, nombre:'Perfume Versace Eros Parfum', cat:'Perfumes', precio:43.99},
-    {id:7, nombre:'Valentino Coral Fantasy', cat:'Perfumes', precio:41.99},
-    {id:8, nombre:'Valentino Intense Mujer', cat:'Perfumes', precio:41.99},
-    {id:9, nombre:'One Million Royal', cat:'Perfumes', precio:42.99},
-    {id:10, nombre:'Prada Paradoxe', cat:'Perfumes', precio:40.99},
-    {id:11, nombre:'AirPods Pro 2', cat:'Tecnología', precio:39.99},
+  let pedidos = [];
+
+  // Catálogo de ejemplo: solo se usa para el botón "Cargar catálogo de ejemplo"
+  // del panel de propietario, la primera vez que la base de datos esté vacía.
+  const SEED_PRODUCTOS = [
+    {nombre:'Rolex', cat:'Relojes', precio:129},
+    {nombre:'Perfume Fame', cat:'Perfumes', precio:40},
+    {nombre:'Pulsera Lacoste', cat:'Complementos', precio:22.99},
+    {nombre:'Camiseta de fútbol', cat:'Ropa', precio:15.99},
+    {nombre:'Perfume Invictus Eau de Toilette', cat:'Perfumes', precio:45},
+    {nombre:'Perfume Versace Eros Parfum', cat:'Perfumes', precio:43.99},
+    {nombre:'Valentino Coral Fantasy', cat:'Perfumes', precio:41.99},
+    {nombre:'Valentino Intense Mujer', cat:'Perfumes', precio:41.99},
+    {nombre:'One Million Royal', cat:'Perfumes', precio:42.99},
+    {nombre:'Prada Paradoxe', cat:'Perfumes', precio:40.99},
+    {nombre:'AirPods Pro 2', cat:'Tecnología', precio:39.99},
   ];
 
-  const categorias = ['Todos', ...new Set(productos.map(p => p.cat))];
+  // Los productos ya NO son una lista fija: se cargan de Firestore
+  // y se mantienen sincronizados en tiempo real (ver listener más abajo).
+  let productos = [];
+
+  function categoriasActuales(){
+    return ['Todos', ...new Set(productos.map(p => p.cat))];
+  }
   let filtro = 'Todos';
   let carrito = {};
 
@@ -660,7 +797,7 @@
   const modalContent = document.getElementById('modalContent');
 
   function renderTabs(){
-    tabsEl.innerHTML = categorias.map(c =>
+    tabsEl.innerHTML = categoriasActuales().map(c =>
       `<button class="tab ${c===filtro?'active':''}" data-cat="${c}">${c}</button>`
     ).join('');
     tabsEl.querySelectorAll('.tab').forEach(btn=>{
@@ -680,8 +817,8 @@
     const lista = filtro==='Todos' ? productos : productos.filter(p=>p.cat===filtro);
     grid.innerHTML = lista.map(p => `
       <div class="card">
-        <div class="card-visual" style="background:${CAT_TINT[p.cat]};">
-          <span class="icon-watermark">${ICONS[p.cat]}</span>
+        <div class="card-visual" style="background:${tintDe(p.cat)};">
+          <span class="icon-watermark">${iconoDe(p.cat)}</span>
           <div class="scrim"></div>
           <span class="cat-label">${p.cat}</span>
         </div>
@@ -696,7 +833,7 @@
     `).join('');
     grid.querySelectorAll('.add-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        const id = Number(btn.dataset.id);
+        const id = btn.dataset.id;
         carrito[id] = (carrito[id]||0) + 1;
         actualizarCarrito();
         btn.textContent = 'Añadido';
@@ -722,12 +859,12 @@
     checkoutBtn.disabled = false;
     let subtotal = 0;
     drawerItems.innerHTML = ids.map(id=>{
-      const p = productos.find(x=>x.id===Number(id));
+      const p = productos.find(x=>x.id===id);
       const cant = carrito[id];
       subtotal += p.precio * cant;
       return `
         <div class="item">
-          <div class="item-visual" style="background:${CAT_TINT[p.cat]};">${ICONS[p.cat]}</div>
+          <div class="item-visual" style="background:${tintDe(p.cat)};">${iconoDe(p.cat)}</div>
           <div class="item-info">
             <h4>${p.nombre}</h4>
             <div class="qty-row">
@@ -773,7 +910,7 @@
   function abrirCheckout(){
     const ids = Object.keys(carrito).filter(id=>carrito[id]>0);
     const subtotal = ids.reduce((sum,id)=>{
-      const p = productos.find(x=>x.id===Number(id));
+      const p = productos.find(x=>x.id===id);
       return sum + p.precio * carrito[id];
     },0);
     modalContent.innerHTML = `
@@ -831,6 +968,23 @@
   }
 
   function simularPago(){
+    const nombre = document.getElementById('nombre')?.value || '(sin nombre)';
+    const email = document.getElementById('email')?.value || '(sin correo)';
+    const direccion = document.getElementById('direccion')?.value || '(sin dirección)';
+    const ids = Object.keys(carrito).filter(id=>carrito[id]>0);
+    const items = ids.map(id=>{
+      const p = productos.find(x=>x.id===id);
+      return {nombre:p.nombre, cantidad:carrito[id], precio:p.precio};
+    });
+    const total = items.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
+    db.collection('pedidos').add({
+      fecha: new Date().toLocaleString('es-ES'),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      nombre, email, direccion, items, total
+    }).catch(err=>{
+      console.error('No se pudo guardar el pedido en Firestore:', err);
+    });
+
     modalContent.innerHTML = `
       <div class="success">
         <span class="check">
@@ -992,6 +1146,188 @@
   renderTabs();
   renderGrid();
   actualizarCarrito();
+
+  /* ---------- Sincronización en tiempo real con Firestore ---------- */
+  db.collection('productos').onSnapshot(snapshot=>{
+    productos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    renderTabs();
+    renderGrid();
+    if(adminScreen.classList.contains('visible')) renderAdminProductos();
+  }, err=>{
+    console.error('Error leyendo productos de Firestore:', err);
+  });
+
+  db.collection('pedidos').orderBy('timestamp','desc').onSnapshot(snapshot=>{
+    pedidos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    if(adminScreen.classList.contains('visible')) renderAdminPedidos();
+  }, err=>{
+    console.error('Error leyendo pedidos de Firestore:', err);
+  });
+
+  /* ---------- Panel del propietario (con Firebase Authentication) ---------- */
+  const adminScreen = document.getElementById('adminScreen');
+  const adminProductosEl = document.getElementById('adminProductos');
+  const adminPedidosEl = document.getElementById('adminPedidos');
+
+  document.getElementById('ownerAccess').addEventListener('click', ()=>{
+    if(auth.currentUser){
+      // Ya está identificado como propietario: entra directo al panel.
+      adminScreen.classList.add('visible');
+      renderAdminProductos();
+      renderAdminPedidos();
+      window.scrollTo(0,0);
+    } else {
+      abrirLoginPropietario();
+    }
+  });
+  document.getElementById('closeAdmin').addEventListener('click', ()=>{
+    adminScreen.classList.remove('visible');
+  });
+  document.getElementById('signOutAdmin').addEventListener('click', ()=>{
+    auth.signOut();
+    adminScreen.classList.remove('visible');
+  });
+
+  document.querySelectorAll('.admin-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.admin-panel').forEach(p=>p.style.display='none');
+      document.getElementById(btn.dataset.panel).style.display='block';
+    });
+  });
+
+  function abrirLoginPropietario(){
+    modalContent.innerHTML = `
+      <h2>Acceso propietario</h2>
+      <div class="mono" style="font-size:13px;color:var(--muted);font-weight:600;">Solo para el dueño de la tienda — usa el email y contraseña que creaste en Firebase Authentication</div>
+      <div class="field">
+        <label for="ownerEmail">Correo electrónico</label>
+        <input id="ownerEmail" type="email" placeholder="tu@correo.com">
+      </div>
+      <div class="field">
+        <label for="ownerPass">Contraseña</label>
+        <input id="ownerPass" type="password" placeholder="••••••••">
+      </div>
+      <div id="ownerError" style="display:none;color:var(--accent);font-size:12px;margin-top:8px;font-weight:600;"></div>
+      <button class="confirm-btn" id="ownerEntrarBtn">Entrar al panel</button>
+    `;
+    modalOverlay.classList.add('open');
+    const intentar = ()=>{
+      const email = document.getElementById('ownerEmail').value.trim();
+      const pass = document.getElementById('ownerPass').value;
+      const err = document.getElementById('ownerError');
+      err.style.display = 'none';
+      auth.signInWithEmailAndPassword(email, pass).then(()=>{
+        modalOverlay.classList.remove('open');
+        adminScreen.classList.add('visible');
+        renderAdminProductos();
+        renderAdminPedidos();
+        window.scrollTo(0,0);
+      }).catch(error=>{
+        err.textContent = 'No se pudo entrar: correo o contraseña incorrectos.';
+        err.style.display = 'block';
+      });
+    };
+    document.getElementById('ownerEntrarBtn').addEventListener('click', intentar);
+    document.getElementById('ownerPass').addEventListener('keydown', (e)=>{
+      if(e.key==='Enter') intentar();
+    });
+  }
+
+  function renderAdminProductos(){
+    const seedBtn = productos.length===0
+      ? `<button class="add-btn" id="npSeedBtn" style="width:100%;margin-bottom:20px;background:transparent;color:var(--muted);border:1px solid var(--line);">Cargar catálogo de ejemplo</button>`
+      : '';
+    adminProductosEl.innerHTML = `
+      ${seedBtn}
+      <div class="admin-section-title">Añadir producto</div>
+      <div class="add-product-form">
+        <div class="field">
+          <label for="npNombre">Nombre</label>
+          <input id="npNombre" type="text" placeholder="Ej. Reloj Casio">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="npCat">Categoría</label>
+            <input id="npCat" type="text" placeholder="Ej. Relojes" list="npCatList">
+            <datalist id="npCatList">
+              ${[...new Set(productos.map(p=>p.cat))].map(c=>`<option value="${c}">`).join('')}
+            </datalist>
+          </div>
+          <div class="field">
+            <label for="npPrecio">Precio (€)</label>
+            <input id="npPrecio" type="number" step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+        <button class="add-btn" id="npGuardarBtn">Añadir al catálogo</button>
+      </div>
+
+      <div class="admin-section-title">Catálogo actual (${productos.length})</div>
+      ${productos.length===0 ? `<div class="empty-admin">Todavía no hay productos en la base de datos.</div>` : productos.map(p => `
+        <div class="product-row">
+          <div class="p-icon" style="background:${tintDe(p.cat)};">${iconoDe(p.cat)}</div>
+          <div class="p-info">
+            <h4>${p.nombre}</h4>
+            <span>${p.cat}</span>
+          </div>
+          <div class="p-price">${formatoPrecio(p.precio)}</div>
+          <button class="p-delete" data-id="${p.id}" aria-label="Eliminar">✕</button>
+        </div>
+      `).join('')}
+    `;
+    document.getElementById('npGuardarBtn').addEventListener('click', ()=>{
+      const nombre = document.getElementById('npNombre').value.trim();
+      const cat = document.getElementById('npCat').value.trim();
+      const precio = parseFloat(document.getElementById('npPrecio').value);
+      if(!nombre || !cat || isNaN(precio) || precio < 0){
+        alert('Rellena nombre, categoría y un precio válido.');
+        return;
+      }
+      db.collection('productos').add({nombre, cat, precio}).catch(err=>{
+        alert('No se pudo guardar en Firestore: ' + err.message);
+      });
+      // No hace falta volver a pintar a mano: el listener onSnapshot lo hace solo.
+    });
+    if(document.getElementById('npSeedBtn')){
+      document.getElementById('npSeedBtn').addEventListener('click', ()=>{
+        const batch = db.batch();
+        SEED_PRODUCTOS.forEach(p=>{
+          const ref = db.collection('productos').doc();
+          batch.set(ref, p);
+        });
+        batch.commit().catch(err=>alert('No se pudo cargar el catálogo: ' + err.message));
+      });
+    }
+    adminProductosEl.querySelectorAll('.p-delete').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.id;
+        db.collection('productos').doc(id).delete().catch(err=>{
+          alert('No se pudo eliminar: ' + err.message);
+        });
+      });
+    });
+  }
+
+  function renderAdminPedidos(){
+    if(pedidos.length===0){
+      adminPedidosEl.innerHTML = `<div class="empty-admin">Aún no hay pedidos en esta sesión.<br>En cuanto alguien complete el checkout simulado, aparecerá aquí.</div>`;
+      return;
+    }
+    adminPedidosEl.innerHTML = pedidos.map(pedido => `
+      <div class="order-card">
+        <div class="order-head">
+          <strong>${pedido.nombre}</strong>
+          <span>${pedido.fecha}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);">${pedido.email} · ${pedido.direccion}</div>
+        ${pedido.items.map(it => `
+          <div class="order-line"><span>${it.cantidad}× ${it.nombre}</span><span>${formatoPrecio(it.precio*it.cantidad)}</span></div>
+        `).join('')}
+        <div class="order-total"><span>Total</span><span>${formatoPrecio(pedido.total)}</span></div>
+      </div>
+    `).join('');
+  }
 </script>
 </body>
 </html>
