@@ -417,11 +417,22 @@
     position:absolute;inset:0;
     background:
       radial-gradient(ellipse 70% 55% at 50% 15%, rgba(214,48,63,0.16), transparent 60%),
-      radial-gradient(ellipse 60% 45% at 50% 100%, rgba(255,255,255,0.05), transparent 70%);
+      radial-gradient(ellipse 60% 45% at 50% 100%, rgba(255,255,255,0.05), transparent 70%),
+      linear-gradient(180deg, rgba(11,11,12,0.55) 0%, rgba(11,11,12,0.75) 55%, rgba(11,11,12,0.92) 100%);
+    z-index:1;
     pointer-events:none;
   }
+  .intro-bg{
+    position:absolute;inset:-14px;
+    background-image:url('fondo-portada.gif');
+    background-size:cover;
+    background-position:center;
+    filter:blur(9px);
+    opacity:0.4;
+    z-index:0;
+  }
   #introScreen.fade-out{opacity:0;pointer-events:none;}
-  #introScreen > *{position:relative;z-index:1;}
+  #introScreen > *{position:relative;z-index:2;}
   .intro-logo{
     font-family:'Anton',sans-serif;
     font-size:15px;letter-spacing:0.3em;text-transform:uppercase;
@@ -483,9 +494,9 @@
 <body>
 
 <div id="introScreen">
-  <div class="intro-logo">Málaga <span>Reventa</span></div>
+  <div class="intro-bg"></div>
   <span class="eyebrow">Exclusividad · Málaga</span>
-  <h1>Piezas únicas<span class="italic">a precio de acceso</span></h1>
+  <h1>Málaga Reventa<span class="italic">piezas únicas, a precio de acceso</span></h1>
   <p>Relojes, perfumes y complementos seleccionados. Entra para ver lo que hay disponible ahora.</p>
   <button class="enter-btn" id="enterStore">Entrar</button>
   <div class="enter-hint"><span class="pulse"></span>Nueva selección esta semana</div>
