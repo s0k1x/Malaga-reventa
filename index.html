@@ -147,27 +147,34 @@
 
   /* ---------- Category tabs ---------- */
   .tabs{
-    display:flex;flex-wrap:wrap;gap:8px;
-    justify-content:center;
-    padding:30px 28px;
+    display:flex;flex-wrap:nowrap;gap:26px;
+    justify-content:flex-start;
+    padding:0 28px;
     border-bottom:1px solid var(--line);
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
   }
+  .tabs::-webkit-scrollbar{display:none;}
+  @media(min-width:720px){ .tabs{justify-content:center;} }
   .tab{
     background:transparent;
-    border:1px solid var(--line);
+    border:none;
+    border-bottom:2px solid transparent;
     color:var(--muted);
-    padding:9px 18px;
+    padding:16px 0 14px;
     font-size:11px;
     letter-spacing:0.12em;
     text-transform:uppercase;
     font-weight:600;
+    white-space:nowrap;
+    flex-shrink:0;
     transition:all .15s ease;
   }
-  .tab:hover{border-color:var(--white);color:var(--white);}
+  .tab:hover{color:var(--white);}
   .tab.active{
-    background:var(--white);
-    color:var(--bg);
-    border-color:var(--white);
+    color:var(--white);
+    border-bottom-color:var(--accent);
   }
 
 
