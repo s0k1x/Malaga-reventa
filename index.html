@@ -73,6 +73,14 @@
   // TU email de propietario — el único que puede entrar al panel.
   // Tiene que ser EXACTAMENTE el mismo email que usaste en Firebase Authentication → Users.
   const OWNER_EMAIL = 'malagareventa@gmail.com';
+
+  // Stripe — clave PUBLICABLE (pk_...). Esta sí puede estar aquí, está hecha para ser pública.
+  // La clave SECRETA (sk_...) NUNCA va aquí — esa vive solo en Netlify, en variables de entorno.
+  // Ahora mismo son claves de TEST: no cobran dinero real.
+  const STRIPE_PUBLIC_KEY = 'pk_test_51U9tWTIRvT06K4otgUdA3DzKi7ZLMEkEqanVf7j4rIRsjyZc49U0ho9Mc9heSVAPIGlOQ7CKKJPdXFgXMrEtTUtm00wAxEBuOg';
+  // TODO: pega aquí la URL de tu función de Netlify cuando la tengamos creada.
+  const STRIPE_CHECKOUT_ENDPOINT = 'https://stupendous-strudel-166c5b.netlify.app/.netlify/functions/create-checkout';
+  const STRIPE_CHECK_SESSION_ENDPOINT = 'https://stupendous-strudel-166c5b.netlify.app/.netlify/functions/check-session';
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1841,27 +1849,13 @@
         </div>
       </div>
       <div id="cuponMsg" style="display:none;font-size:12px;font-weight:600;margin-top:-8px;margin-bottom:16px;"></div>
-      <div class="pay-divider">Datos de pago</div>
-      <div class="field">
-        <label for="numTarjeta">Número de tarjeta</label>
-        <input id="numTarjeta" type="text" inputmode="numeric" placeholder="1234 1234 1234 1234" maxlength="19">
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label for="caducidad">Caducidad</label>
-          <input id="caducidad" type="text" inputmode="numeric" placeholder="MM/AA" maxlength="5">
-        </div>
-        <div class="field">
-          <label for="cvv">CVV</label>
-          <input id="cvv" type="text" inputmode="numeric" placeholder="123" maxlength="3">
-        </div>
-      </div>
-      <div class="pay-note">El cobro se procesa mediante Stripe. Esta tienda todavía no tiene una cuenta de Stripe conectada para cobros reales — no introduzcas datos de tarjeta reales.</div>
+      <div class="pay-note">Al confirmar, se abre la página de pago segura de Stripe. Ahora mismo la tienda está en modo de pruebas: usa la tarjeta <strong style="color:var(--white);">4242 4242 4242 4242</strong>, cualquier fecha futura y cualquier CVV — no se cobra dinero real.</div>
       <label class="switch-label accept-terms-row">
         <input type="checkbox" id="aceptaTerminos">
         <span>He leído y acepto los <button type="button" class="inline-legal-link" data-doc="terminos">Términos y condiciones</button>, la <button type="button" class="inline-legal-link" data-doc="privacidad">Política de privacidad</button> y la <button type="button" class="inline-legal-link" data-doc="devoluciones">Política de devoluciones</button>.</span>
       </label>
-      <button class="confirm-btn" id="confirmarPago" disabled>Confirmar pedido</button>
+      <div id="pagoError" style="display:none;color:var(--accent);font-size:12px;margin-top:10px;font-weight:600;"></div>
+      <button class="confirm-btn" id="confirmarPago" disabled>Ir a pagar con Stripe</button>
     `;
     modalOverlay.classList.add('open');
 
@@ -1936,23 +1930,7 @@
       document.getElementById('confirmarPago').disabled = !e.target.checked;
     });
 
-    const numTarjeta = document.getElementById('numTarjeta');
-    numTarjeta.addEventListener('input', ()=>{
-      let v = numTarjeta.value.replace(/\D/g,'').slice(0,16);
-      numTarjeta.value = v.replace(/(.{4})/g,'$1 ').trim();
-    });
-    const caducidad = document.getElementById('caducidad');
-    caducidad.addEventListener('input', ()=>{
-      let v = caducidad.value.replace(/\D/g,'').slice(0,4);
-      if(v.length>=3) v = v.slice(0,2) + '/' + v.slice(2);
-      caducidad.value = v;
-    });
-    const cvv = document.getElementById('cvv');
-    cvv.addEventListener('input', ()=>{
-      cvv.value = cvv.value.replace(/\D/g,'').slice(0,3);
-    });
-
-    document.getElementById('confirmarPago').addEventListener('click', simularPago);
+    document.getElementById('confirmarPago').addEventListener('click', pagarConStripe);
   }
 
   function enviarEmailConfirmacion(pedido){
@@ -1970,10 +1948,19 @@
     });
   }
 
-  function simularPago(){
-    const nombre = document.getElementById('nombre')?.value || '(sin nombre)';
-    const email = document.getElementById('email')?.value || '(sin correo)';
-    const direccion = document.getElementById('direccion')?.value || '(sin dirección)';
+  async function pagarConStripe(){
+    const nombre = document.getElementById('nombre')?.value.trim();
+    const email = document.getElementById('email')?.value.trim();
+    const direccion = document.getElementById('direccion')?.value.trim();
+    const errorEl = document.getElementById('pagoError');
+    errorEl.style.display = 'none';
+
+    if(!nombre || !email || !direccion){
+      errorEl.textContent = 'Rellena nombre, correo y dirección antes de pagar.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
     const ids = Object.keys(carrito).filter(id=>carrito[id]>0);
     const items = ids.map(id=>{
       const p = productos.find(x=>x.id===id);
@@ -1984,40 +1971,91 @@
     if(cuponAplicado){
       descuento = cuponAplicado.tipo==='porcentaje' ? subtotal*(cuponAplicado.valor/100) : Math.min(cuponAplicado.valor, subtotal);
     }
-    const total = subtotal - descuento;
+    const ratio = descuento > 0 ? (subtotal - descuento) / subtotal : 1;
+    // Aplicamos el descuento del cupón repartido proporcionalmente en cada artículo,
+    // porque Stripe no admite líneas de importe negativo.
+    const itemsConDescuento = items.map(it => ({...it, precio: Math.round(it.precio * ratio * 100) / 100}));
+    const total = itemsConDescuento.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
 
-    const pedidoData = {
-      fecha: new Date().toLocaleString('es-ES'),
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      nombre, email, direccion, items, total,
-      cupon: cuponAplicado ? cuponAplicado.codigo : null
-    };
-    db.collection('pedidos').add(pedidoData).then(()=>{
+    const boton = document.getElementById('confirmarPago');
+    boton.disabled = true;
+    boton.textContent = 'Preparando el pago…';
+
+    try{
+      const pedidoRef = await db.collection('pedidos').add({
+        fecha: new Date().toLocaleString('es-ES'),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        nombre, email, direccion,
+        items: itemsConDescuento, total,
+        cupon: cuponAplicado ? cuponAplicado.codigo : null,
+        pagado: false
+      });
+
+      const successUrl = `${window.location.origin}${window.location.pathname}?pago=exito&pedido=${pedidoRef.id}&session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${window.location.origin}${window.location.pathname}?pago=cancelado&pedido=${pedidoRef.id}`;
+
+      const res = await fetch(STRIPE_CHECKOUT_ENDPOINT, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ items: itemsConDescuento, email, successUrl, cancelUrl })
+      });
+      const data = await res.json();
+      if(!res.ok || !data.url){
+        throw new Error(data.error || 'No se pudo crear el pago.');
+      }
+
+      await pedidoRef.update({ stripeSessionId: data.id });
       if(cuponAplicado){
         db.collection('cupones').doc(cuponAplicado.id).update({usosActuales: firebase.firestore.FieldValue.increment(1)}).catch(()=>{});
       }
-      enviarEmailConfirmacion(pedidoData);
-    }).catch(err=>{
-      console.error('No se pudo guardar el pedido en Firestore:', err);
-    });
 
-    modalContent.innerHTML = `
-      <div class="success">
-        <span class="check">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-        </span>
-        <h2>Pedido confirmado</h2>
-        <p style="color:var(--muted);font-size:13.5px;">Así se vería la confirmación. Cuando conectes Stripe de verdad, aquí se mostraría el número de orden real.</p>
-        <button class="confirm-btn" id="cerrarModal">Cerrar</button>
-      </div>
-    `;
-    carrito = {};
-    actualizarCarrito();
-    document.getElementById('cerrarModal').addEventListener('click', ()=>{
-      modalOverlay.classList.remove('open');
-      cerrarCarrito();
-    });
+      window.location.href = data.url; // redirige a la página de pago de Stripe
+    } catch(err){
+      errorEl.textContent = 'No se pudo iniciar el pago: ' + err.message;
+      errorEl.style.display = 'block';
+      boton.disabled = false;
+      boton.textContent = 'Ir a pagar con Stripe';
+    }
   }
+
+  // Al volver de Stripe (pago aceptado o cancelado), comprobamos qué pasó.
+  (function comprobarVueltaDeStripe(){
+    const params = new URLSearchParams(window.location.search);
+    const pago = params.get('pago');
+    const pedidoId = params.get('pedido');
+    const sessionId = params.get('session_id');
+    if(!pago || !pedidoId) return;
+
+    if(pago==='exito' && sessionId){
+      fetch(`${STRIPE_CHECK_SESSION_ENDPOINT}?session_id=${sessionId}`)
+        .then(r=>r.json())
+        .then(data=>{
+          if(data.pagado){
+            db.collection('pedidos').doc(pedidoId).update({pagado:true}).then(()=>{
+              return db.collection('pedidos').doc(pedidoId).get();
+            }).then(doc=>{
+              if(doc.exists) enviarEmailConfirmacion(doc.data());
+            });
+            carrito = {};
+            modalContent.innerHTML = `
+              <div class="success">
+                <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
+                <h2>¡Pago confirmado!</h2>
+                <p style="color:var(--muted);font-size:13.5px;">Tu pedido se ha registrado y el pago se ha procesado correctamente.</p>
+                <button class="confirm-btn" id="cerrarModal">Cerrar</button>
+              </div>
+            `;
+            modalOverlay.classList.add('open');
+            document.getElementById('cerrarModal').addEventListener('click', ()=> modalOverlay.classList.remove('open'));
+          }
+        })
+        .catch(err=> console.error('No se pudo verificar el pago:', err));
+    } else if(pago==='cancelado'){
+      db.collection('pedidos').doc(pedidoId).delete().catch(()=>{});
+    }
+    // Limpiamos la URL para que no se quede el session_id ahí colgado si recargan.
+    window.history.replaceState({}, document.title, window.location.pathname);
+  })();
 
   modalOverlay.addEventListener('click', (e)=>{
     if(e.target===modalOverlay) modalOverlay.classList.remove('open');
