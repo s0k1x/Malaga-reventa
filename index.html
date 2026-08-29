@@ -36,6 +36,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
   // TODO: sustituye esto por TU configuración real (Firebase Console → Configuración del proyecto → Tus apps)
   const firebaseConfig = {
@@ -54,6 +55,18 @@
   // (Cloudinary → Settings → Upload → Upload presets → Add upload preset → Signing mode: Unsigned)
   const CLOUDINARY_CLOUD_NAME = 'impjfhjy';
   const CLOUDINARY_UPLOAD_PRESET = 'malaga-productos';
+
+  // TODO (opcional): rellena esto para que se envíe un email de confirmación real al cliente.
+  // Si lo dejas como está (con 'TU_'), el pedido se guarda igual pero no se envía email.
+  // Crea una cuenta gratis en https://www.emailjs.com, conecta tu Gmail/Outlook como "Service",
+  // crea una "Email Template" con las variables {{nombre}}, {{email}}, {{total}}, {{items}}, {{fecha}}
+  // y copia aquí el Service ID, el Template ID y tu Public Key (Account → General).
+  const EMAILJS_SERVICE_ID = 'TU_SERVICE_ID';
+  const EMAILJS_TEMPLATE_ID = 'TU_TEMPLATE_ID';
+  const EMAILJS_PUBLIC_KEY = 'TU_PUBLIC_KEY';
+  if(EMAILJS_PUBLIC_KEY && EMAILJS_PUBLIC_KEY.indexOf('TU_') !== 0 && window.emailjs){
+    emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+  }
 
   // TU email de propietario — el único que puede entrar al panel.
   // Tiene que ser EXACTAMENTE el mismo email que usaste en Firebase Authentication → Users.
@@ -124,6 +137,60 @@
   }
   .logo .thin{color:var(--muted);}
   .header-actions{display:flex;align-items:center;gap:10px;}
+  .hamburger-btn{
+    background:none;border:1px solid var(--line);color:var(--white);
+    width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;transition:border-color .15s ease;
+  }
+  .hamburger-btn:hover{border-color:var(--white);}
+  .hamburger-btn svg{width:18px;height:18px;}
+  .menu-drawer{left:0;right:auto;transform:translateX(-100%);border-left:none;border-right:1px solid var(--line);}
+  .menu-drawer.open{transform:translateX(0);}
+  .menu-link{
+    display:flex;align-items:center;gap:12px;
+    padding:16px 0;border-bottom:1px solid var(--line);
+    color:var(--white);font-size:14px;font-weight:600;
+    background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;cursor:pointer;
+  }
+  .menu-link span.emoji{font-size:16px;width:20px;text-align:center;}
+  .menu-link:hover{color:var(--accent-portada);}
+  .menu-section-label{
+    font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);
+    margin:20px 0 4px;
+  }
+  .menu-section-label:first-child{margin-top:0;}
+  .my-order-card{
+    border:1px solid var(--line);padding:14px;margin-top:12px;
+  }
+  .my-order-card .order-head{
+    display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px;
+  }
+  .my-order-status{
+    display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;margin-top:8px;
+  }
+  .my-order-status .dot{width:7px;height:7px;border-radius:50%;}
+  .report-issue-btn{
+    display:block;width:100%;margin-top:12px;padding:9px;
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  }
+  .report-issue-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .tracking-steps{
+    display:flex;align-items:center;margin-top:12px;
+  }
+  .tracking-step{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .tracking-dot{
+    width:10px;height:10px;border-radius:50%;background:var(--line);flex-shrink:0;
+  }
+  .tracking-step.done .tracking-dot{background:var(--accent-portada);}
+  .tracking-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}
+  .tracking-step.done .tracking-label{color:var(--white);}
+  .tracking-line{flex:1;height:2px;background:var(--line);margin:0 4px 16px;}
+  .tracking-line.done{background:var(--accent-portada);}
+  .tracking-cancelled{
+    margin-top:12px;font-size:12px;font-weight:700;color:var(--accent);
+    text-transform:uppercase;letter-spacing:0.06em;
+  }
   .login-btn{
     background:transparent;
     color:var(--muted);
@@ -281,6 +348,14 @@
     display:flex;align-items:center;justify-content:center;
   }
   .card-visual .video-badge svg{width:11px;height:11px;color:#fff;}
+  .fav-heart{
+    position:absolute;top:12px;right:12px;z-index:3;
+    width:30px;height:30px;border-radius:50%;
+    background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.25);
+    display:flex;align-items:center;justify-content:center;font-size:14px;
+    transition:transform .15s ease;
+  }
+  .fav-heart:active{transform:scale(0.9);}
   .sold-out-overlay{
     position:absolute;inset:0;z-index:2;
     background:rgba(11,11,12,0.65);
@@ -501,6 +576,15 @@
     padding:12px 14px;
     line-height:1.5;
   }
+  .accept-terms-row{
+    align-items:flex-start !important;margin-top:16px;cursor:pointer;
+  }
+  .accept-terms-row span{font-size:12px;color:var(--muted);line-height:1.5;font-weight:400;}
+  .inline-legal-link{
+    background:none;border:none;color:var(--accent-portada);
+    font-size:12px;text-decoration:underline;padding:0;font-weight:600;
+  }
+  .confirm-btn:disabled{background:var(--line);color:var(--muted);cursor:not-allowed;}
   .confirm-btn{
     width:100%;margin-top:20px;
     background:var(--white);color:var(--bg);
@@ -528,6 +612,25 @@
     margin-top:14px;padding:6px;text-decoration:underline;
   }
   .owner-link:hover{color:var(--muted);}
+  .legal-links{
+    display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;
+    margin-top:16px;
+  }
+  .legal-link{
+    background:none;border:none;color:var(--muted);
+    font-size:10.5px;letter-spacing:0.04em;text-decoration:underline;
+    padding:4px 0;text-transform:none;
+  }
+  .legal-link:hover{color:var(--white);}
+  .legal-doc h3{
+    font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:16px;color:var(--white);margin:22px 0 8px;
+  }
+  .legal-doc h3:first-child{margin-top:0;}
+  .legal-doc p{font-size:13px;color:var(--muted);line-height:1.65;margin:0 0 10px;}
+  .legal-doc .placeholder{color:var(--accent-portada);font-weight:600;}
+  .legal-doc ul{margin:0 0 10px;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.65;}
+  .modal-legal{max-width:520px;}
 
   /* ---------- Panel del propietario ---------- */
   #adminScreen{
@@ -697,6 +800,10 @@
     background:var(--bg);border:1px solid var(--line);color:var(--white);
     padding:7px 10px;font-size:12.5px;font-family:inherit;flex:1;
   }
+  .order-delete-btn{
+    background:none;border:1px solid var(--line);color:var(--accent);
+    width:30px;height:30px;font-size:13px;flex-shrink:0;
+  }
 
   .stats-grid{
     display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
@@ -829,7 +936,12 @@
 <div id="storeApp">
 
 <header>
-  <div class="logo">Málaga <span class="thin">Reventa</span></div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <button class="hamburger-btn" id="openMenu" aria-label="Abrir menú">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="logo">Málaga <span class="thin">Reventa</span></div>
+  </div>
   <div class="header-actions">
     <button class="login-btn" id="openLogin">Iniciar sesión</button>
     <button class="cart-btn" id="openCart" aria-haspopup="dialog">
@@ -838,10 +950,18 @@
   </div>
 </header>
 
+<div class="overlay" id="menuOverlay"></div>
+<aside class="drawer menu-drawer" id="menuDrawer" role="dialog" aria-label="Menú">
+  <div class="drawer-head">
+    <h2>Menú</h2>
+    <button class="close-btn" id="closeMenu" aria-label="Cerrar menú">✕</button>
+  </div>
+  <div class="drawer-items" id="menuItems"></div>
+</aside>
+
 <section class="hero">
   <span class="eyebrow">Málaga · Edición limitada</span>
   <h1>Málaga Reventa<span class="italic">a otro precio</span></h1>
-  <p>Relojes, perfumes, ropa y complementos, seleccionados uno a uno. Stock limitado cada semana.</p>
   <div class="trust-row">
     <span class="trust-item">Vendedores verificados</span>
     <span class="trust-div"></span>
@@ -873,7 +993,20 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
-<footer>Málaga Reventa © 2026 · Málaga, España<br><span id="contactoFooter"></span><br><button id="ownerAccess" class="owner-link">Acceso propietario</button></footer>
+<footer>
+  Málaga Reventa © 2026 · Málaga, España<br>
+  <span id="contactoFooter"></span>
+  <div class="legal-links">
+    <button class="legal-link" data-doc="privacidad">Política de privacidad</button>
+    <button class="legal-link" data-doc="terminos">Términos y condiciones</button>
+    <button class="legal-link" data-doc="envios">Política de envíos</button>
+    <button class="legal-link" data-doc="devoluciones">Política de devoluciones</button>
+    <button class="legal-link" data-doc="aviso">Aviso legal</button>
+    <button class="legal-link" id="footerContacto">Contacto</button>
+    <button class="legal-link" id="footerFAQ">Preguntas frecuentes</button>
+  </div>
+  <button id="ownerAccess" class="owner-link">Acceso propietario</button>
+</footer>
 
 </div><!-- /#storeApp -->
 
@@ -889,11 +1022,15 @@
   <nav class="admin-tabs">
     <button class="admin-tab active" data-panel="adminProductos">Productos</button>
     <button class="admin-tab" data-panel="adminPedidos">Pedidos</button>
+    <button class="admin-tab" data-panel="adminIncidencias">Incidencias</button>
+    <button class="admin-tab" data-panel="adminCupones">Cupones</button>
     <button class="admin-tab" data-panel="adminEstadisticas">Estadísticas</button>
     <button class="admin-tab" data-panel="adminConfig">Configuración</button>
   </nav>
   <div id="adminProductos" class="admin-panel"></div>
   <div id="adminPedidos" class="admin-panel" style="display:none;"></div>
+  <div id="adminIncidencias" class="admin-panel" style="display:none;"></div>
+  <div id="adminCupones" class="admin-panel" style="display:none;"></div>
   <div id="adminEstadisticas" class="admin-panel" style="display:none;"></div>
   <div id="adminConfig" class="admin-panel" style="display:none;"></div>
 </div>
@@ -977,6 +1114,173 @@
   const checkoutBtn = document.getElementById('checkoutBtn');
   const modalOverlay = document.getElementById('modalOverlay');
   const modalContent = document.getElementById('modalContent');
+  const menuDrawer = document.getElementById('menuDrawer');
+  const menuOverlay = document.getElementById('menuOverlay');
+  const menuItems = document.getElementById('menuItems');
+
+  /* ---------- Documentos legales ---------- */
+  const DOCUMENTOS_LEGALES = {
+    privacidad: {
+      titulo: 'Política de privacidad',
+      html: `
+        <h3>Responsable del tratamiento</h3>
+        <p>El responsable de los datos personales recogidos en esta web es <span class="placeholder">[NOMBRE COMPLETO O RAZÓN SOCIAL DEL TITULAR]</span>, con NIF/CIF <span class="placeholder">[NIF/CIF]</span> y domicilio en <span class="placeholder">[DIRECCIÓN COMPLETA]</span>. Puedes contactar en <span class="placeholder">[EMAIL DE CONTACTO]</span>.</p>
+        <h3>Qué datos recogemos</h3>
+        <p>Al comprar o crear una cuenta recogemos: nombre, correo electrónico y dirección de envío. Al iniciar sesión con Google, recibimos el correo asociado a esa cuenta.</p>
+        <h3>Para qué los usamos</h3>
+        <p>Para gestionar tu pedido, contactarte sobre su estado, y darte acceso a tu cuenta y a tu historial de pedidos. No usamos tus datos con fines publicitarios ni los vendemos a terceros.</p>
+        <h3>Con quién los compartimos</h3>
+        <p>Usamos proveedores externos para operar la tienda: Google Firebase (alojamiento de la base de datos y autenticación) y Cloudinary (alojamiento de imágenes). Estos proveedores actúan como encargados del tratamiento y no usan tus datos para fines propios.</p>
+        <h3>Cuánto tiempo los conservamos</h3>
+        <p>Conservamos los datos de tus pedidos mientras mantengas tu cuenta o durante el tiempo exigido por la normativa fiscal y de consumo aplicable.</p>
+        <h3>Tus derechos</h3>
+        <p>Puedes solicitar acceso, rectificación, supresión, oposición o portabilidad de tus datos escribiendo a <span class="placeholder">[EMAIL DE CONTACTO]</span>.</p>
+      `
+    },
+    terminos: {
+      titulo: 'Términos y condiciones',
+      html: `
+        <h3>Objeto</h3>
+        <p>Estas condiciones regulan la compra de productos a través de esta web, operada por <span class="placeholder">[NOMBRE COMPLETO O RAZÓN SOCIAL DEL TITULAR]</span>.</p>
+        <h3>Proceso de compra</h3>
+        <p>Al añadir productos a la bolsa y confirmar el pedido, realizas una oferta de compra. El contrato se entiende formalizado cuando confirmas el pedido en el checkout.</p>
+        <h3>Precios</h3>
+        <p>Los precios se muestran en euros e incluyen los impuestos aplicables, salvo que se indique lo contrario. Los gastos de envío, si los hubiera, se mostrarán antes de confirmar la compra.</p>
+        <h3>Forma de pago</h3>
+        <p>El pago se procesa mediante Stripe. <span class="placeholder">[Actualiza este párrafo cuando tengas Stripe conectado de verdad: mientras tanto, ningún pago se cobra realmente.]</span></p>
+        <h3>Disponibilidad</h3>
+        <p>Los productos están sujetos a disponibilidad de stock. Si un producto se agota tras tu compra, te lo comunicaremos y se te reembolsará el importe correspondiente.</p>
+        <h3>Derecho de desistimiento</h3>
+        <p>Consulta la Política de devoluciones para conocer tu derecho a desistir de la compra.</p>
+        <h3>Legislación aplicable</h3>
+        <p>Estas condiciones se rigen por la legislación española, en particular el Real Decreto Legislativo 1/2007 (consumidores y usuarios) y el RGPD en materia de protección de datos.</p>
+      `
+    },
+    envios: {
+      titulo: 'Política de envíos',
+      html: `
+        <h3>Plazo de entrega</h3>
+        <p id="envioPolPlazo">Nuestro plazo de envío habitual es de <span class="placeholder">1–2 semanas</span> desde la confirmación del pedido.</p>
+        <h3>Zona de envío</h3>
+        <p><span class="placeholder">[Indica aquí a qué países o zonas enviáis, por ejemplo: España peninsular, Baleares, Canarias, Unión Europea...]</span></p>
+        <h3>Gastos de envío</h3>
+        <p><span class="placeholder">[Indica aquí el coste del envío, o si es gratuito a partir de cierto importe]</span></p>
+        <h3>Seguimiento</h3>
+        <p>Puedes consultar el estado de tu pedido en cualquier momento desde el menú ☰ → "Mis pedidos", iniciando sesión con el correo que usaste al comprar.</p>
+        <h3>Incidencias</h3>
+        <p>Si tu pedido no llega en el plazo indicado o llega dañado, contacta con nosotros en <span class="placeholder">[EMAIL DE CONTACTO]</span> y lo resolveremos.</p>
+      `
+    },
+    devoluciones: {
+      titulo: 'Política de devoluciones',
+      html: `
+        <h3>Derecho de desistimiento</h3>
+        <p>De acuerdo con la normativa de consumidores española, dispones de <strong style="color:var(--white);">14 días naturales</strong> desde la recepción del pedido para desistir de la compra sin necesidad de justificación.</p>
+        <h3>Condiciones para devolver</h3>
+        <ul>
+          <li>El producto debe estar sin usar y en su embalaje original.</li>
+          <li>Debes conservar la prueba de compra (email de confirmación del pedido).</li>
+        </ul>
+        <h3>Cómo solicitar una devolución</h3>
+        <p>Escribe a <span class="placeholder">[EMAIL DE CONTACTO]</span> indicando tu número de pedido y el motivo. Te confirmaremos cómo y a dónde enviar el producto.</p>
+        <h3>Reembolso</h3>
+        <p>Una vez recibido y revisado el producto devuelto, te reembolsaremos el importe usando el mismo método de pago que usaste en la compra, en un plazo máximo de 14 días.</p>
+        <h3>Gastos de la devolución</h3>
+        <p><span class="placeholder">[Indica aquí si los gastos de envío de la devolución los asume el cliente o la tienda]</span></p>
+        <h3>Excepciones</h3>
+        <p>No se aceptan devoluciones de productos que, por razones de higiene o haber sido desprecintados, no sean aptos para ser devueltos.</p>
+      `
+    },
+    aviso: {
+      titulo: 'Aviso legal',
+      html: `
+        <h3>Identificación del titular</h3>
+        <p><strong style="color:var(--white);">Titular:</strong> <span class="placeholder">[NOMBRE COMPLETO O RAZÓN SOCIAL]</span><br>
+        <strong style="color:var(--white);">NIF/CIF:</strong> <span class="placeholder">[NIF/CIF]</span><br>
+        <strong style="color:var(--white);">Domicilio:</strong> <span class="placeholder">[DIRECCIÓN COMPLETA]</span><br>
+        <strong style="color:var(--white);">Contacto:</strong> <span class="placeholder">[EMAIL DE CONTACTO]</span></p>
+        <h3>Objeto</h3>
+        <p>Esta web tiene por objeto la venta online de los productos que en ella se ofrecen.</p>
+        <h3>Propiedad intelectual</h3>
+        <p>Los contenidos de esta web (textos, imágenes, diseño) son propiedad de su titular o de sus licenciantes, salvo indicación contraria.</p>
+        <h3>Legislación aplicable</h3>
+        <p>Este aviso legal se rige por la legislación española. Para cualquier controversia, las partes se someten a los juzgados y tribunales del domicilio del titular, salvo que la normativa de consumo establezca otra cosa.</p>
+      `
+    }
+  };
+
+  function abrirDocumentoLegal(tipo){
+    const doc = DOCUMENTOS_LEGALES[tipo];
+    modalContent.classList.add('modal-legal');
+    modalContent.innerHTML = `
+      <h2>${doc.titulo}</h2>
+      <div class="legal-doc" style="margin-top:16px;">${doc.html}</div>
+      <button class="confirm-btn" id="cerrarLegalBtn" style="margin-top:20px;">Cerrar</button>
+    `;
+    modalOverlay.classList.add('open');
+    const envioP = document.getElementById('envioPolPlazo');
+    if(envioP && configTienda.envioTexto){
+      envioP.innerHTML = `Nuestro plazo de envío habitual es: <strong style="color:var(--white);">${configTienda.envioTexto}</strong>.`;
+    }
+    document.getElementById('cerrarLegalBtn').addEventListener('click', ()=>{
+      modalOverlay.classList.remove('open');
+      modalContent.classList.remove('modal-legal');
+    });
+  }
+
+  document.querySelectorAll('.legal-link').forEach(btn=>{
+    btn.addEventListener('click', ()=> abrirDocumentoLegal(btn.dataset.doc));
+  });
+
+  const FAQ_ITEMS = [
+    {p: '¿Cuánto tarda en llegar mi pedido?', r: 'El plazo habitual se muestra en la portada y en la Política de envíos — normalmente entre 1 y 2 semanas desde que confirmas la compra.'},
+    {p: '¿Cómo sé en qué estado está mi pedido?', r: 'Inicia sesión con el correo que usaste al comprar y ve al menú ☰ → "Mis pedidos". Ahí verás el estado actualizado (Pendiente, Enviado, Entregado...).'},
+    {p: '¿Puedo devolver un producto?', r: 'Sí, tienes 14 días naturales desde que lo recibes. Consulta la Política de devoluciones para ver cómo hacerlo.'},
+    {p: '¿Es seguro pagar en esta web?', r: 'El pago se procesa a través de Stripe, una de las pasarelas de pago más usadas del mundo. Nunca guardamos tus datos de tarjeta en nuestros servidores.'},
+    {p: '¿Qué hago si mi pedido llega con un problema?', r: 'Ve a "Mis pedidos" en el menú ☰, y en el pedido correspondiente pulsa "Reportar un problema" — lo revisaremos y te responderemos por correo.'},
+    {p: '¿En cuánto tiempo responden a mis mensajes?', r: 'Normalmente respondemos en ' + '<span id="faqTiempoRespuesta">' + '24–48 horas laborables' + '</span>' + '.'},
+  ];
+
+  function abrirFAQ(){
+    modalContent.classList.add('modal-legal');
+    modalContent.innerHTML = `
+      <h2>Preguntas frecuentes</h2>
+      <div class="legal-doc" style="margin-top:16px;">
+        ${FAQ_ITEMS.map(item => `<h3 style="font-family:'Inter',sans-serif;text-transform:none;font-size:14.5px;font-weight:700;color:var(--white);">${item.p}</h3><p>${item.r}</p>`).join('')}
+      </div>
+      <button class="confirm-btn" id="cerrarFAQBtn" style="margin-top:20px;">Cerrar</button>
+    `;
+    modalOverlay.classList.add('open');
+    const tEl = document.getElementById('faqTiempoRespuesta');
+    if(tEl && configTienda.tiempoRespuesta) tEl.textContent = configTienda.tiempoRespuesta;
+    document.getElementById('cerrarFAQBtn').addEventListener('click', ()=>{
+      modalOverlay.classList.remove('open');
+      modalContent.classList.remove('modal-legal');
+    });
+  }
+  document.getElementById('footerFAQ').addEventListener('click', abrirFAQ);
+
+  function abrirContacto(){
+    const tieneWhatsapp = !!configTienda.whatsapp;
+    const tieneEmail = !!configTienda.contactoEmail;
+    modalContent.classList.add('modal-legal');
+    modalContent.innerHTML = `
+      <h2>Contacto</h2>
+      <div class="legal-doc" style="margin-top:16px;">
+        <p>¿Dudas sobre un pedido, un producto, o cualquier otra cosa? Escríbenos, respondemos en <strong style="color:var(--white);">${configTienda.tiempoRespuesta || '24–48 horas laborables'}</strong>.</p>
+      </div>
+      ${tieneEmail ? `<a href="mailto:${configTienda.contactoEmail}" class="confirm-btn" style="display:block;text-align:center;text-decoration:none;margin-top:10px;">✉️ ${configTienda.contactoEmail}</a>` : ''}
+      ${tieneWhatsapp ? `<a href="https://wa.me/${configTienda.whatsapp.replace(/\D/g,'')}" target="_blank" rel="noopener" class="confirm-btn" style="display:block;text-align:center;text-decoration:none;margin-top:10px;background:#25D366;color:#fff;">💬 Escríbenos por WhatsApp</a>` : ''}
+      ${!tieneEmail && !tieneWhatsapp ? `<p style="color:var(--muted);font-size:12.5px;margin-top:10px;">Todavía no se ha configurado ningún medio de contacto.</p>` : ''}
+      <button class="confirm-btn" id="cerrarContactoBtn" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--line);">Cerrar</button>
+    `;
+    modalOverlay.classList.add('open');
+    document.getElementById('cerrarContactoBtn').addEventListener('click', ()=>{
+      modalOverlay.classList.remove('open');
+      modalContent.classList.remove('modal-legal');
+    });
+  }
+  document.getElementById('footerContacto').addEventListener('click', abrirContacto);
 
   function renderTabs(){
     tabsEl.innerHTML = categoriasActuales().map(c =>
@@ -1001,6 +1305,7 @@
     grid.innerHTML = lista.map(p => {
       const enOferta = p.enOferta && p.precioOferta != null;
       const sinStock = p.stock != null && p.stock <= 0;
+      const esFavorito = misFavoritosIds.includes(p.id);
       const precioHTML = enOferta
         ? `<div class="price-box"><span class="price-old">${formatoPrecio(p.precio)}</span><span class="price price-offer">${formatoPrecio(p.precioOferta)}</span></div>`
         : `<span class="price">${formatoPrecio(p.precio)}</span>`;
@@ -1008,6 +1313,7 @@
       <div class="card">
         <div class="card-visual" style="background:${tintDe(p.cat)};">
           ${mediaHTML(p)}
+          <button class="fav-heart ${esFavorito ? 'active':''}" data-fav="${p.id}" aria-label="Favorito">${esFavorito ? '❤️' : '🤍'}</button>
           ${enOferta ? '<span class="offer-ribbon">Oferta</span>' : ''}
           ${sinStock ? '<div class="sold-out-overlay">Agotado</div>' : ''}
           <div class="scrim"></div>
@@ -1031,6 +1337,9 @@
         btn.textContent = 'Añadido';
         setTimeout(()=>{ btn.textContent = 'Añadir'; }, 900);
       });
+    });
+    grid.querySelectorAll('.fav-heart').forEach(btn=>{
+      btn.addEventListener('click', ()=> toggleFavorito(btn.dataset.fav));
     });
   }
 
@@ -1096,11 +1405,350 @@
     overlay.classList.remove('open');
   }
 
+  document.getElementById('openMenu').addEventListener('click', ()=>{
+    renderMenu();
+    menuDrawer.classList.add('open');
+    menuOverlay.classList.add('open');
+  });
+  document.getElementById('closeMenu').addEventListener('click', cerrarMenu);
+  menuOverlay.addEventListener('click', cerrarMenu);
+  function cerrarMenu(){
+    menuDrawer.classList.remove('open');
+    menuOverlay.classList.remove('open');
+  }
+
+  function renderMenu(){
+    const logueado = auth.currentUser && auth.currentUser.email !== OWNER_EMAIL;
+    menuItems.innerHTML = `
+      <div class="menu-section-label">Navegar</div>
+      <button class="menu-link" id="menuInicio"><span class="emoji">🏠</span> Inicio</button>
+      <button class="menu-link" id="menuCategorias"><span class="emoji">🛍️</span> Ver categorías</button>
+
+      <div class="menu-section-label">Cuenta</div>
+      <button class="menu-link" id="menuPerfil"><span class="emoji">👤</span> ${logueado ? 'Mi perfil' : 'Iniciar sesión'}</button>
+
+      <div id="menuContenidoExtra"></div>
+    `;
+
+    document.getElementById('menuInicio').addEventListener('click', ()=>{
+      cerrarMenu();
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+    document.getElementById('menuCategorias').addEventListener('click', ()=>{
+      cerrarMenu();
+      document.getElementById('tabs').scrollIntoView({behavior:'smooth'});
+    });
+    document.getElementById('menuPerfil').addEventListener('click', ()=>{
+      if(!logueado){
+        cerrarMenu();
+        abrirLoginCliente();
+        return;
+      }
+      renderPerfilSubmenu();
+    });
+  }
+
+  function renderPerfilSubmenu(){
+    mostrarEnMenu(`
+      <div class="menu-section-label">Perfil — ${auth.currentUser.email}</div>
+      <button class="menu-link" id="pfPedidos"><span class="emoji">📦</span> Mis pedidos</button>
+      <button class="menu-link" id="pfFavoritos"><span class="emoji">❤️</span> Favoritos</button>
+      <button class="menu-link" id="pfDirecciones"><span class="emoji">📍</span> Mis direcciones</button>
+      <button class="menu-link" id="pfCupones"><span class="emoji">🎟️</span> Mis cupones</button>
+      <button class="menu-link" id="pfSoporte"><span class="emoji">💬</span> Soporte</button>
+      <button class="menu-link" id="pfConfig"><span class="emoji">⚙️</span> Configuración</button>
+    `);
+    document.getElementById('pfPedidos').addEventListener('click', abrirMisPedidos);
+    document.getElementById('pfFavoritos').addEventListener('click', abrirMisFavoritos);
+    document.getElementById('pfDirecciones').addEventListener('click', abrirMisDirecciones);
+    document.getElementById('pfCupones').addEventListener('click', abrirMisCupones);
+    document.getElementById('pfSoporte').addEventListener('click', abrirSoporte);
+    document.getElementById('pfConfig').addEventListener('click', abrirConfigCuenta);
+  }
+
+  function botonVolverPerfil(){
+    return `<button class="menu-link" id="volverPerfil" style="border-top:none;padding-top:0;margin-bottom:8px;color:var(--muted);font-size:12px;">← Volver a mi perfil</button>`;
+  }
+  function engancharVolver(){
+    const btn = document.getElementById('volverPerfil');
+    if(btn) btn.addEventListener('click', renderPerfilSubmenu);
+  }
+
+  function abrirMisPedidos(){
+    mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis pedidos</div><p style="color:var(--muted);font-size:13px;">Buscando tus pedidos…</p>`);
+    engancharVolver();
+    db.collection('pedidos').where('email','==',auth.currentUser.email).get().then(snapshot=>{
+      if(snapshot.empty){
+        mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis pedidos</div><p style="color:var(--muted);font-size:13px;">Todavía no tienes pedidos con este correo.</p>`);
+        engancharVolver();
+        return;
+      }
+      const misPedidos = snapshot.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>{
+        const ta = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate() : new Date(0);
+        const tb = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
+        return tb - ta;
+      });
+      mostrarEnMenu(botonVolverPerfil() + `
+        <div class="menu-section-label">Mis pedidos (${misPedidos.length})</div>
+        ${misPedidos.map(p => `
+          <div class="my-order-card">
+            <div class="order-head"><span>${p.fecha}</span><span>${formatoPrecio(p.total)}</span></div>
+            ${p.items.map(it=>`<div style="font-size:12.5px;color:var(--muted);">${it.cantidad}× ${it.nombre}</div>`).join('')}
+            ${renderTrackingSteps(p.estado||'Pendiente')}
+            <button class="report-issue-btn" data-id="${p.id}">Reportar un problema</button>
+          </div>
+        `).join('')}
+      `);
+      engancharVolver();
+      document.querySelectorAll('.report-issue-btn').forEach(btn=>{
+        btn.addEventListener('click', ()=> abrirReportarProblema(btn.dataset.id, misPedidos.find(p=>p.id===btn.dataset.id)));
+      });
+    }).catch(err=>{
+      mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis pedidos</div><p style="color:var(--accent);font-size:13px;">No se pudieron cargar: ${err.message}</p>`);
+      engancharVolver();
+    });
+  }
+
+  function renderTrackingSteps(estado){
+    if(estado === 'Cancelado'){
+      return `<div class="tracking-cancelled">Pedido cancelado</div>`;
+    }
+    const pasos = ['Pendiente','Enviado','Entregado'];
+    const idx = Math.max(0, pasos.indexOf(estado));
+    return `
+      <div class="tracking-steps">
+        ${pasos.map((paso,i) => `
+          <div class="tracking-step ${i<=idx ? 'done':''}">
+            <span class="tracking-dot"></span>
+            <span class="tracking-label">${paso}</span>
+          </div>
+          ${i<pasos.length-1 ? `<div class="tracking-line ${i<idx ? 'done':''}"></div>` : ''}
+        `).join('')}
+      </div>
+    `;
+  }
+
+  /* ---------- Favoritos ---------- */
+  let misFavoritosIds = [];
+  function iniciarListenerFavoritos(){
+    if(!auth.currentUser || auth.currentUser.email === OWNER_EMAIL){ misFavoritosIds = []; renderGrid(); return; }
+    db.collection('favoritos').doc(auth.currentUser.uid).onSnapshot(doc=>{
+      misFavoritosIds = doc.exists ? (doc.data().productIds || []) : [];
+      renderGrid();
+    });
+  }
+  auth.onAuthStateChanged(()=> iniciarListenerFavoritos());
+
+  function toggleFavorito(productId){
+    if(!auth.currentUser || auth.currentUser.email === OWNER_EMAIL){
+      abrirLoginCliente();
+      return;
+    }
+    const ref = db.collection('favoritos').doc(auth.currentUser.uid);
+    const yaEsta = misFavoritosIds.includes(productId);
+    ref.set({
+      productIds: yaEsta ? firebase.firestore.FieldValue.arrayRemove(productId) : firebase.firestore.FieldValue.arrayUnion(productId)
+    }, {merge:true}).catch(err=> alert('No se pudo actualizar favoritos: ' + err.message));
+  }
+
+  function abrirMisFavoritos(){
+    const favs = productos.filter(p => misFavoritosIds.includes(p.id) && p.visible !== false);
+    mostrarEnMenu(botonVolverPerfil() + `
+      <div class="menu-section-label">Favoritos (${favs.length})</div>
+      ${favs.length===0 ? `<p style="color:var(--muted);font-size:13px;">Todavía no has guardado ningún producto. Toca el ❤️ en cualquier producto de la tienda.</p>` : favs.map(p => `
+        <div class="my-order-card">
+          <div class="order-head"><strong style="color:var(--white);">${p.nombre}</strong><span>${formatoPrecio(precioEfectivo(p))}</span></div>
+          <button class="report-issue-btn" data-fav-remove="${p.id}">Quitar de favoritos</button>
+        </div>
+      `).join('')}
+    `);
+    engancharVolver();
+    document.querySelectorAll('[data-fav-remove]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        toggleFavorito(btn.dataset.favRemove);
+        setTimeout(abrirMisFavoritos, 300);
+      });
+    });
+  }
+
+  /* ---------- Mis direcciones ---------- */
+  function abrirMisDirecciones(){
+    mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis direcciones</div><p style="color:var(--muted);font-size:13px;">Cargando…</p>`);
+    engancharVolver();
+    db.collection('direcciones').doc(auth.currentUser.uid).get().then(doc=>{
+      const direcciones = doc.exists ? (doc.data().lista || []) : [];
+      pintarDirecciones(direcciones);
+    }).catch(err=>{
+      mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis direcciones</div><p style="color:var(--accent);font-size:13px;">No se pudieron cargar: ${err.message}</p>`);
+      engancharVolver();
+    });
+  }
+
+  function pintarDirecciones(direcciones){
+    mostrarEnMenu(botonVolverPerfil() + `
+      <div class="menu-section-label">Mis direcciones (${direcciones.length})</div>
+      ${direcciones.map(d => `
+        <div class="my-order-card">
+          <div class="order-head"><strong style="color:var(--white);">${d.etiqueta}</strong></div>
+          <div style="font-size:12.5px;color:var(--muted);">${d.direccion}, ${d.ciudad} ${d.cp||''}</div>
+          <button class="report-issue-btn" data-dir-remove="${d.id}">Eliminar</button>
+        </div>
+      `).join('')}
+      <div class="admin-section-title">Añadir dirección</div>
+      <div class="field"><label for="dirEtiqueta">Etiqueta</label><input id="dirEtiqueta" type="text" placeholder="Ej. Casa, Trabajo..."></div>
+      <div class="field"><label for="dirDireccion">Dirección</label><input id="dirDireccion" type="text" placeholder="Calle y número"></div>
+      <div class="field-row">
+        <div class="field"><label for="dirCiudad">Ciudad</label><input id="dirCiudad" type="text" placeholder="Málaga"></div>
+        <div class="field"><label for="dirCP">Código postal</label><input id="dirCP" type="text" placeholder="29001"></div>
+      </div>
+      <button class="confirm-btn" id="dirGuardarBtn">Guardar dirección</button>
+    `);
+    engancharVolver();
+    document.querySelectorAll('[data-dir-remove]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const nuevas = direcciones.filter(d=>d.id !== btn.dataset.dirRemove);
+        db.collection('direcciones').doc(auth.currentUser.uid).set({lista: nuevas}, {merge:true}).then(()=> pintarDirecciones(nuevas));
+      });
+    });
+    document.getElementById('dirGuardarBtn').addEventListener('click', ()=>{
+      const etiqueta = document.getElementById('dirEtiqueta').value.trim();
+      const direccion = document.getElementById('dirDireccion').value.trim();
+      const ciudad = document.getElementById('dirCiudad').value.trim();
+      const cp = document.getElementById('dirCP').value.trim();
+      if(!etiqueta || !direccion || !ciudad){ alert('Rellena al menos etiqueta, dirección y ciudad.'); return; }
+      const nueva = {id: Date.now().toString(), etiqueta, direccion, ciudad, cp};
+      const nuevas = [...direcciones, nueva];
+      db.collection('direcciones').doc(auth.currentUser.uid).set({lista: nuevas}, {merge:true}).then(()=> pintarDirecciones(nuevas)).catch(err=>{
+        alert('No se pudo guardar: ' + err.message);
+      });
+    });
+  }
+
+  /* ---------- Mis cupones ---------- */
+  function abrirMisCupones(){
+    mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Cupones disponibles</div><p style="color:var(--muted);font-size:13px;">Cargando…</p>`);
+    engancharVolver();
+    db.collection('cupones').where('activo','==',true).get().then(snapshot=>{
+      const cupones = snapshot.docs.map(d=>d.data());
+      mostrarEnMenu(botonVolverPerfil() + `
+        <div class="menu-section-label">Cupones disponibles (${cupones.length})</div>
+        ${cupones.length===0 ? `<p style="color:var(--muted);font-size:13px;">No hay cupones activos ahora mismo.</p>` : cupones.map(c => `
+          <div class="my-order-card">
+            <div class="order-head"><strong class="mono" style="color:var(--white);">${c.codigo}</strong><span>${c.tipo==='porcentaje' ? c.valor+'%' : formatoPrecio(c.valor)}</span></div>
+            <div style="font-size:12px;color:var(--muted);">Introduce este código en el checkout para aplicar el descuento.</div>
+          </div>
+        `).join('')}
+      `);
+      engancharVolver();
+    }).catch(err=>{
+      mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis cupones</div><p style="color:var(--accent);font-size:13px;">No se pudieron cargar: ${err.message}</p>`);
+      engancharVolver();
+    });
+  }
+
+  /* ---------- Soporte ---------- */
+  function abrirSoporte(){
+    mostrarEnMenu(botonVolverPerfil() + `
+      <div class="menu-section-label">Soporte</div>
+      <button class="menu-link" id="spFAQ"><span class="emoji">❓</span> Preguntas frecuentes</button>
+      <button class="menu-link" id="spContacto"><span class="emoji">✉️</span> Contacto</button>
+      <p style="color:var(--muted);font-size:12.5px;margin-top:16px;">¿Problema con un pedido en concreto? Repórtalo desde "Mis pedidos" para que quede asociado a ese pedido.</p>
+    `);
+    engancharVolver();
+    document.getElementById('spFAQ').addEventListener('click', ()=>{ cerrarMenu(); abrirFAQ(); });
+    document.getElementById('spContacto').addEventListener('click', ()=>{ cerrarMenu(); abrirContacto(); });
+  }
+
+  /* ---------- Configuración de cuenta ---------- */
+  function abrirConfigCuenta(){
+    mostrarEnMenu(botonVolverPerfil() + `
+      <div class="menu-section-label">Configuración de tu cuenta</div>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">Sesión iniciada como<br><strong style="color:var(--white);">${auth.currentUser.email}</strong></p>
+      <button class="confirm-btn" id="pfCambiarPass" style="background:transparent;color:var(--muted);border:1px solid var(--line);">Enviar email para cambiar contraseña</button>
+      <button class="confirm-btn" id="pfCerrarSesion" style="margin-top:10px;">Cerrar sesión</button>
+      <div id="pfPassMsg" style="display:none;color:var(--accent-portada);font-size:12px;font-weight:600;margin-top:10px;"></div>
+    `);
+    engancharVolver();
+    document.getElementById('pfCerrarSesion').addEventListener('click', ()=>{
+      auth.signOut();
+      cerrarMenu();
+    });
+    document.getElementById('pfCambiarPass').addEventListener('click', ()=>{
+      auth.sendPasswordResetEmail(auth.currentUser.email).then(()=>{
+        const msg = document.getElementById('pfPassMsg');
+        msg.textContent = 'Te hemos enviado un email para cambiar tu contraseña.';
+        msg.style.display = 'block';
+      }).catch(err=>{
+        const msg = document.getElementById('pfPassMsg');
+        msg.style.color = 'var(--accent)';
+        msg.textContent = 'No se pudo enviar: ' + err.message;
+        msg.style.display = 'block';
+      });
+    });
+  }
+
+  function abrirReportarProblema(pedidoId, pedido){
+    modalContent.innerHTML = `
+      <h2>Reportar un problema</h2>
+      <div class="mono" style="font-size:13px;color:var(--muted);font-weight:600;">Pedido del ${pedido.fecha} · ${formatoPrecio(pedido.total)}</div>
+      <div class="field">
+        <label for="incAsunto">Asunto</label>
+        <input id="incAsunto" type="text" placeholder="Ej. Falta un artículo, llegó dañado...">
+      </div>
+      <div class="field">
+        <label for="incMensaje">Cuéntanos qué ha pasado</label>
+        <textarea id="incMensaje" rows="4" placeholder="Describe el problema con el mayor detalle posible" style="width:100%;padding:11px 13px;border:2px solid var(--line);border-radius:0;font-family:inherit;font-size:14px;background:var(--bg);color:var(--white);resize:vertical;"></textarea>
+      </div>
+      <div id="incError" style="display:none;color:var(--accent);font-size:12px;margin-top:8px;font-weight:600;"></div>
+      <div class="pay-note">Respondemos en ${configTienda.tiempoRespuesta || '24–48 horas laborables'}, por correo, al email de tu cuenta.</div>
+      <button class="confirm-btn" id="incEnviarBtn">Enviar reporte</button>
+    `;
+    modalOverlay.classList.add('open');
+    document.getElementById('incEnviarBtn').addEventListener('click', ()=>{
+      const asunto = document.getElementById('incAsunto').value.trim();
+      const mensaje = document.getElementById('incMensaje').value.trim();
+      const err = document.getElementById('incError');
+      if(!asunto || !mensaje){
+        err.textContent = 'Rellena el asunto y el mensaje.';
+        err.style.display = 'block';
+        return;
+      }
+      db.collection('incidencias').add({
+        pedidoId, asunto, mensaje,
+        email: auth.currentUser.email,
+        nombre: pedido.nombre || '',
+        estado: 'Abierta',
+        fecha: new Date().toLocaleString('es-ES'),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(()=>{
+        modalContent.innerHTML = `
+          <div class="success">
+            <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <h2>Reporte enviado</h2>
+            <p style="color:var(--muted);font-size:13.5px;">Lo hemos recibido y te responderemos en ${configTienda.tiempoRespuesta || '24–48 horas laborables'}.</p>
+            <button class="confirm-btn" id="cerrarIncModal">Cerrar</button>
+          </div>
+        `;
+        document.getElementById('cerrarIncModal').addEventListener('click', ()=> modalOverlay.classList.remove('open'));
+      }).catch(error=>{
+        err.textContent = 'No se pudo enviar: ' + error.message;
+        err.style.display = 'block';
+      });
+    });
+  }
+
+  function mostrarEnMenu(html){
+    document.getElementById('menuContenidoExtra').innerHTML = html;
+  }
+
   checkoutBtn.addEventListener('click', ()=>{
     abrirCheckout();
   });
 
+  let cuponAplicado = null;
+
   function abrirCheckout(){
+    cuponAplicado = null;
     const ids = Object.keys(carrito).filter(id=>carrito[id]>0);
     const subtotal = ids.reduce((sum,id)=>{
       const p = productos.find(x=>x.id===id);
@@ -1108,7 +1756,7 @@
     },0);
     modalContent.innerHTML = `
       <h2>Finalizar compra</h2>
-      <div class="price">Total a pagar: ${formatoPrecio(subtotal)}</div>
+      <div class="price" id="checkoutTotalMostrado">Total a pagar: ${formatoPrecio(subtotal)}</div>
       <div class="field">
         <label for="nombre">Nombre completo</label>
         <input id="nombre" type="text" placeholder="Tu nombre">
@@ -1117,10 +1765,24 @@
         <label for="email">Correo electrónico</label>
         <input id="email" type="email" placeholder="tucorreo@ejemplo.com">
       </div>
+      <div class="field" id="direccionesGuardadasWrap" style="display:none;">
+        <label for="direccionesGuardadas">Usar una dirección guardada</label>
+        <select id="direccionesGuardadas" class="order-status-select" style="width:100%;"></select>
+      </div>
       <div class="field">
         <label for="direccion">Dirección de envío</label>
         <input id="direccion" type="text" placeholder="Calle, número, ciudad">
       </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="cuponInput">Código de cupón (opcional)</label>
+          <input id="cuponInput" type="text" placeholder="Ej. BIENVENIDA10">
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end;">
+          <button type="button" class="confirm-btn" id="cuponAplicarBtn" style="margin:0;background:transparent;color:var(--muted);border:1px solid var(--line);">Aplicar</button>
+        </div>
+      </div>
+      <div id="cuponMsg" style="display:none;font-size:12px;font-weight:600;margin-top:-8px;margin-bottom:16px;"></div>
       <div class="pay-divider">Datos de pago</div>
       <div class="field">
         <label for="numTarjeta">Número de tarjeta</label>
@@ -1137,9 +1799,84 @@
         </div>
       </div>
       <div class="pay-note">El cobro se procesa mediante Stripe. Esta tienda todavía no tiene una cuenta de Stripe conectada para cobros reales — no introduzcas datos de tarjeta reales.</div>
-      <button class="confirm-btn" id="confirmarPago">Confirmar pedido</button>
+      <label class="switch-label accept-terms-row">
+        <input type="checkbox" id="aceptaTerminos">
+        <span>He leído y acepto los <button type="button" class="inline-legal-link" data-doc="terminos">Términos y condiciones</button>, la <button type="button" class="inline-legal-link" data-doc="privacidad">Política de privacidad</button> y la <button type="button" class="inline-legal-link" data-doc="devoluciones">Política de devoluciones</button>.</span>
+      </label>
+      <button class="confirm-btn" id="confirmarPago" disabled>Confirmar pedido</button>
     `;
     modalOverlay.classList.add('open');
+
+    function actualizarTotalMostrado(){
+      const el = document.getElementById('checkoutTotalMostrado');
+      if(cuponAplicado){
+        const descuento = cuponAplicado.tipo==='porcentaje' ? subtotal*(cuponAplicado.valor/100) : Math.min(cuponAplicado.valor, subtotal);
+        el.innerHTML = `<span style="text-decoration:line-through;color:var(--muted);font-size:13px;display:block;">${formatoPrecio(subtotal)}</span>Total a pagar: ${formatoPrecio(subtotal-descuento)}`;
+      } else {
+        el.textContent = 'Total a pagar: ' + formatoPrecio(subtotal);
+      }
+    }
+
+    if(auth.currentUser && auth.currentUser.email !== OWNER_EMAIL){
+      document.getElementById('email').value = auth.currentUser.email;
+      db.collection('direcciones').doc(auth.currentUser.uid).get().then(doc=>{
+        const lista = doc.exists ? (doc.data().lista||[]) : [];
+        if(lista.length){
+          const wrap = document.getElementById('direccionesGuardadasWrap');
+          wrap.style.display = 'block';
+          const sel = document.getElementById('direccionesGuardadas');
+          sel.innerHTML = `<option value="">Elige una dirección…</option>` + lista.map(d=>`<option value="${d.direccion}, ${d.ciudad} ${d.cp||''}">${d.etiqueta} — ${d.direccion}, ${d.ciudad}</option>`).join('');
+          sel.addEventListener('change', ()=>{
+            if(sel.value) document.getElementById('direccion').value = sel.value;
+          });
+        }
+      });
+    }
+
+    document.getElementById('cuponAplicarBtn').addEventListener('click', ()=>{
+      const codigo = document.getElementById('cuponInput').value.trim().toUpperCase();
+      const msg = document.getElementById('cuponMsg');
+      if(!codigo){ return; }
+      db.collection('cupones').where('codigo','==',codigo).where('activo','==',true).get().then(snapshot=>{
+        if(snapshot.empty){
+          cuponAplicado = null;
+          msg.style.color = 'var(--accent)';
+          msg.textContent = 'Ese código no existe o no está activo.';
+          msg.style.display = 'block';
+          actualizarTotalMostrado();
+          return;
+        }
+        const doc = snapshot.docs[0];
+        const c = doc.data();
+        if(c.usosMax != null && (c.usosActuales||0) >= c.usosMax){
+          cuponAplicado = null;
+          msg.style.color = 'var(--accent)';
+          msg.textContent = 'Ese cupón ya ha alcanzado su límite de usos.';
+          msg.style.display = 'block';
+          actualizarTotalMostrado();
+          return;
+        }
+        cuponAplicado = {id: doc.id, codigo: c.codigo, tipo: c.tipo, valor: c.valor};
+        msg.style.color = 'var(--accent-portada)';
+        msg.textContent = `Cupón "${c.codigo}" aplicado ✓`;
+        msg.style.display = 'block';
+        actualizarTotalMostrado();
+      }).catch(err=>{
+        msg.style.color = 'var(--accent)';
+        msg.textContent = 'No se pudo comprobar el cupón: ' + err.message;
+        msg.style.display = 'block';
+      });
+    });
+
+    document.querySelectorAll('.inline-legal-link').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.preventDefault();
+        abrirDocumentoLegal(btn.dataset.doc);
+      });
+    });
+    document.getElementById('aceptaTerminos').addEventListener('change', (e)=>{
+      document.getElementById('confirmarPago').disabled = !e.target.checked;
+    });
 
     const numTarjeta = document.getElementById('numTarjeta');
     numTarjeta.addEventListener('input', ()=>{
@@ -1160,6 +1897,21 @@
     document.getElementById('confirmarPago').addEventListener('click', simularPago);
   }
 
+  function enviarEmailConfirmacion(pedido){
+    if(!window.emailjs || EMAILJS_PUBLIC_KEY.indexOf('TU_') === 0) return; // no configurado: se omite en silencio
+    const itemsTexto = pedido.items.map(it => `${it.cantidad}× ${it.nombre} — ${formatoPrecio(it.precio*it.cantidad)}`).join('\n');
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      nombre: pedido.nombre,
+      email: pedido.email,
+      total: formatoPrecio(pedido.total),
+      items: itemsTexto,
+      fecha: pedido.fecha,
+      direccion: pedido.direccion
+    }).catch(err=>{
+      console.error('No se pudo enviar el email de confirmación:', err);
+    });
+  }
+
   function simularPago(){
     const nombre = document.getElementById('nombre')?.value || '(sin nombre)';
     const email = document.getElementById('email')?.value || '(sin correo)';
@@ -1169,11 +1921,24 @@
       const p = productos.find(x=>x.id===id);
       return {nombre:p.nombre, cantidad:carrito[id], precio:precioEfectivo(p)};
     });
-    const total = items.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
-    db.collection('pedidos').add({
+    const subtotal = items.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
+    let descuento = 0;
+    if(cuponAplicado){
+      descuento = cuponAplicado.tipo==='porcentaje' ? subtotal*(cuponAplicado.valor/100) : Math.min(cuponAplicado.valor, subtotal);
+    }
+    const total = subtotal - descuento;
+
+    const pedidoData = {
       fecha: new Date().toLocaleString('es-ES'),
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      nombre, email, direccion, items, total
+      nombre, email, direccion, items, total,
+      cupon: cuponAplicado ? cuponAplicado.codigo : null
+    };
+    db.collection('pedidos').add(pedidoData).then(()=>{
+      if(cuponAplicado){
+        db.collection('cupones').doc(cuponAplicado.id).update({usosActuales: firebase.firestore.FieldValue.increment(1)}).catch(()=>{});
+      }
+      enviarEmailConfirmacion(pedidoData);
     }).catch(err=>{
       console.error('No se pudo guardar el pedido en Firestore:', err);
     });
@@ -1322,7 +2087,7 @@
     console.error('Error leyendo pedidos de Firestore:', err);
   });
 
-  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: ''};
+  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: '', whatsapp: '', tiempoRespuesta: '24–48 horas laborables'};
   db.collection('config').doc('general').onSnapshot(doc=>{
     if(doc.exists){
       configTienda = {...configTienda, ...doc.data()};
@@ -1332,6 +2097,22 @@
     }
   }, err=>{
     console.error('Error leyendo configuración de Firestore:', err);
+  });
+
+  let incidencias = [];
+  db.collection('incidencias').orderBy('timestamp','desc').onSnapshot(snapshot=>{
+    incidencias = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    if(adminScreen.classList.contains('visible')) renderAdminIncidencias();
+  }, err=>{
+    console.error('Error leyendo incidencias de Firestore:', err);
+  });
+
+  let cupones = [];
+  db.collection('cupones').onSnapshot(snapshot=>{
+    cupones = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+    if(adminScreen.classList.contains('visible')) renderAdminCupones();
+  }, err=>{
+    console.error('Error leyendo cupones de Firestore:', err);
   });
 
   /* ---------- Panel del propietario (con Firebase Authentication) ---------- */
@@ -1345,6 +2126,8 @@
       adminScreen.classList.add('visible');
       renderAdminProductos();
       renderAdminPedidos();
+      renderAdminIncidencias();
+      renderAdminCupones();
       renderAdminEstadisticas();
       renderAdminResumen();
       renderAdminConfig();
@@ -1402,6 +2185,8 @@
         adminScreen.classList.add('visible');
         renderAdminProductos();
         renderAdminPedidos();
+        renderAdminIncidencias();
+        renderAdminCupones();
         renderAdminEstadisticas();
         renderAdminResumen();
         renderAdminConfig();
@@ -1741,6 +2526,7 @@
           <select class="order-status-select" data-id="${pedido.id}">
             ${ESTADOS_PEDIDO.map(e => `<option value="${e}" ${((pedido.estado||'Pendiente')===e) ? 'selected' : ''}>${e}</option>`).join('')}
           </select>
+          <button class="order-delete-btn" data-id="${pedido.id}" aria-label="Eliminar pedido">✕</button>
         </div>
       </div>
     `).join('')}
@@ -1756,6 +2542,14 @@
       sel.addEventListener('change', ()=>{
         db.collection('pedidos').doc(sel.dataset.id).update({estado: sel.value}).catch(err=>{
           alert('No se pudo actualizar el estado: ' + err.message);
+        });
+      });
+    });
+    adminPedidosEl.querySelectorAll('.order-delete-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('¿Eliminar este pedido? No se puede deshacer.')) return;
+        db.collection('pedidos').doc(btn.dataset.id).delete().catch(err=>{
+          alert('No se pudo eliminar el pedido: ' + err.message);
         });
       });
     });
@@ -1879,6 +2673,14 @@
           <label for="cfgContacto">Email de contacto (se muestra en el pie de página)</label>
           <input id="cfgContacto" type="email" value="${(configTienda.contactoEmail||'').replace(/"/g,'&quot;')}" placeholder="contacto@tutienda.com">
         </div>
+        <div class="field">
+          <label for="cfgWhatsapp">WhatsApp de contacto (opcional — déjalo vacío para no ofrecerlo)</label>
+          <input id="cfgWhatsapp" type="text" value="${(configTienda.whatsapp||'').replace(/"/g,'&quot;')}" placeholder="+34 600 000 000">
+        </div>
+        <div class="field">
+          <label for="cfgTiempoResp">Tiempo de respuesta habitual</label>
+          <input id="cfgTiempoResp" type="text" value="${(configTienda.tiempoRespuesta||'').replace(/"/g,'&quot;')}" placeholder="24–48 horas laborables">
+        </div>
         <button class="add-btn" id="cfgGuardarBtn">Guardar configuración</button>
         <div id="cfgGuardadoMsg" style="display:none;color:var(--accent-portada);font-size:12px;font-weight:600;margin-top:10px;">Guardado ✓</div>
       </div>
@@ -1886,12 +2688,129 @@
     document.getElementById('cfgGuardarBtn').addEventListener('click', ()=>{
       const envioTexto = document.getElementById('cfgEnvio').value.trim();
       const contactoEmail = document.getElementById('cfgContacto').value.trim();
-      db.collection('config').doc('general').set({envioTexto, contactoEmail}, {merge:true}).then(()=>{
+      const whatsapp = document.getElementById('cfgWhatsapp').value.trim();
+      const tiempoRespuesta = document.getElementById('cfgTiempoResp').value.trim();
+      db.collection('config').doc('general').set({envioTexto, contactoEmail, whatsapp, tiempoRespuesta}, {merge:true}).then(()=>{
         const msg = document.getElementById('cfgGuardadoMsg');
         msg.style.display = 'block';
         setTimeout(()=> msg.style.display='none', 2000);
       }).catch(err=>{
         alert('No se pudo guardar la configuración: ' + err.message);
+      });
+    });
+  }
+
+  const ESTADOS_INCIDENCIA = ['Abierta', 'En proceso', 'Resuelta'];
+  const ESTADO_INCIDENCIA_COLOR = {'Abierta': 'var(--accent)', 'En proceso': 'var(--accent-portada)', 'Resuelta': '#3FAE6A'};
+
+  function renderAdminIncidencias(){
+    const el = document.getElementById('adminIncidencias');
+    if(incidencias.length===0){
+      el.innerHTML = `<div class="empty-admin">No hay incidencias reportadas.<br>Cuando un cliente reporte un problema con su pedido, aparecerá aquí.</div>`;
+      return;
+    }
+    el.innerHTML = incidencias.map(inc => `
+      <div class="order-card">
+        <div class="order-head">
+          <strong>${inc.asunto}</strong>
+          <span>${inc.fecha}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">${inc.nombre ? inc.nombre + ' · ' : ''}${inc.email}${inc.pedidoId ? ' · Pedido ' + inc.pedidoId.slice(0,6) : ''}</div>
+        <p style="font-size:13px;color:var(--white);line-height:1.5;margin:0 0 12px;">${inc.mensaje}</p>
+        <div class="order-status-row">
+          <span class="order-status-dot" style="background:${ESTADO_INCIDENCIA_COLOR[inc.estado||'Abierta']};"></span>
+          <select class="incidencia-status-select" data-id="${inc.id}">
+            ${ESTADOS_INCIDENCIA.map(e => `<option value="${e}" ${((inc.estado||'Abierta')===e) ? 'selected' : ''}>${e}</option>`).join('')}
+          </select>
+          <button class="order-delete-btn" data-id="${inc.id}" aria-label="Eliminar incidencia">✕</button>
+        </div>
+      </div>
+    `).join('');
+    el.querySelectorAll('.incidencia-status-select').forEach(sel=>{
+      sel.addEventListener('change', ()=>{
+        db.collection('incidencias').doc(sel.dataset.id).update({estado: sel.value}).catch(err=>{
+          alert('No se pudo actualizar: ' + err.message);
+        });
+      });
+    });
+    el.querySelectorAll('.order-delete-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('¿Eliminar esta incidencia?')) return;
+        db.collection('incidencias').doc(btn.dataset.id).delete().catch(err=>{
+          alert('No se pudo eliminar: ' + err.message);
+        });
+      });
+    });
+  }
+
+  function renderAdminCupones(){
+    const el = document.getElementById('adminCupones');
+    el.innerHTML = `
+      <div class="admin-section-title">Crear cupón</div>
+      <div class="add-product-form">
+        <div class="field">
+          <label for="cpCodigo">Código</label>
+          <input id="cpCodigo" type="text" placeholder="Ej. BIENVENIDA10" style="text-transform:uppercase;">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="cpTipo">Tipo de descuento</label>
+            <select id="cpTipo" class="order-status-select" style="width:100%;">
+              <option value="porcentaje">Porcentaje (%)</option>
+              <option value="fijo">Cantidad fija (€)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="cpValor">Valor</label>
+            <input id="cpValor" type="number" step="0.01" min="0" placeholder="10">
+          </div>
+        </div>
+        <div class="field">
+          <label for="cpUsosMax">Límite de usos (opcional, déjalo vacío para ilimitado)</label>
+          <input id="cpUsosMax" type="number" step="1" min="1" placeholder="Ej. 50">
+        </div>
+        <button class="add-btn" id="cpCrearBtn">Crear cupón</button>
+      </div>
+
+      <div class="admin-section-title">Cupones (${cupones.length})</div>
+      ${cupones.length===0 ? `<div class="empty-admin">Todavía no has creado ningún cupón.</div>` : cupones.map(c => `
+        <div class="product-row ${c.activo===false ? 'product-row-hidden':''}">
+          <div class="p-info">
+            <h4 class="mono" style="font-family:'IBM Plex Mono',monospace;">${c.codigo}</h4>
+            <span>${c.tipo==='porcentaje' ? c.valor+'% de descuento' : formatoPrecio(c.valor)+' de descuento'} · Usado ${c.usosActuales||0}${c.usosMax!=null ? '/'+c.usosMax : ''} veces</span>
+          </div>
+          <button class="p-visibility" data-id="${c.id}" data-activo="${c.activo!==false}" aria-label="Activar/desactivar">${c.activo===false ? '🚫' : '✅'}</button>
+          <button class="p-delete" data-id="${c.id}" aria-label="Eliminar">✕</button>
+        </div>
+      `).join('')}
+    `;
+    document.getElementById('cpCrearBtn').addEventListener('click', ()=>{
+      const codigo = document.getElementById('cpCodigo').value.trim().toUpperCase();
+      const tipo = document.getElementById('cpTipo').value;
+      const valor = parseFloat(document.getElementById('cpValor').value);
+      const usosMaxRaw = document.getElementById('cpUsosMax').value;
+      const usosMax = usosMaxRaw !== '' ? parseInt(usosMaxRaw,10) : null;
+      if(!codigo || isNaN(valor) || valor <= 0){
+        alert('Rellena un código y un valor de descuento válido.');
+        return;
+      }
+      db.collection('cupones').add({codigo, tipo, valor, usosMax, usosActuales:0, activo:true}).catch(err=>{
+        alert('No se pudo crear el cupón: ' + err.message);
+      });
+    });
+    el.querySelectorAll('.p-visibility').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        db.collection('cupones').doc(btn.dataset.id).update({activo: btn.dataset.activo !== 'true'}).catch(err=>{
+          alert('No se pudo cambiar: ' + err.message);
+        });
+      });
+    });
+    el.querySelectorAll('.p-delete').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('¿Eliminar este cupón?')) return;
+        db.collection('cupones').doc(btn.dataset.id).delete().catch(err=>{
+          alert('No se pudo eliminar: ' + err.message);
+        });
       });
     });
   }
