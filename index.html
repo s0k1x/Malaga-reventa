@@ -88,6 +88,8 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;}
+  body.no-scroll{overflow:hidden;position:fixed;width:100%;}
+
   html{scroll-behavior:smooth;}
   body{
     background:var(--bg);
@@ -201,11 +203,24 @@
     letter-spacing:0.12em;
     text-transform:uppercase;
     transition:all .15s ease;
+    max-width:130px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .login-btn:hover{border-color:var(--white);color:var(--white);}
   .login-btn.logged-in{
-    border-color:var(--accent-portada);color:var(--white);
+    display:inline-flex;align-items:center;gap:7px;
+    border:none;background:var(--bg-2);color:var(--white);
+    border-radius:999px;padding:6px 16px 6px 6px;
+    text-transform:none;letter-spacing:0;
   }
+  .login-btn.logged-in:hover{background:var(--line);}
+  .login-avatar{
+    width:24px;height:24px;border-radius:50%;flex-shrink:0;
+    background:var(--accent-portada);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Anton',sans-serif;font-size:12px;
+  }
+  .login-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;}
   .cart-btn{
     background:var(--white);
     color:var(--bg);
@@ -230,7 +245,7 @@
   /* ---------- Hero ---------- */
   .hero{
     position:relative;
-    padding:90px 28px 64px;
+    padding:64px 28px 44px;
     text-align:center;
     overflow:hidden;
     border-bottom:1px solid var(--line);
@@ -266,7 +281,7 @@
   }
   .trust-row{
     display:flex;justify-content:center;align-items:center;gap:16px;
-    margin-top:36px;flex-wrap:wrap;
+    margin-top:26px;flex-wrap:wrap;
   }
   .trust-item{
     font-size:11px;letter-spacing:0.12em;text-transform:uppercase;
@@ -1394,27 +1409,43 @@
     });
   }
 
+  let scrollGuardado = 0;
+  function bloquearScroll(){
+    scrollGuardado = window.scrollY;
+    document.body.style.top = -scrollGuardado + 'px';
+    document.body.classList.add('no-scroll');
+  }
+  function desbloquearScroll(){
+    document.body.classList.remove('no-scroll');
+    document.body.style.top = '';
+    window.scrollTo(0, scrollGuardado);
+  }
+
   document.getElementById('openCart').addEventListener('click', ()=>{
     drawer.classList.add('open');
     overlay.classList.add('open');
+    bloquearScroll();
   });
   document.getElementById('closeCart').addEventListener('click', cerrarCarrito);
   overlay.addEventListener('click', cerrarCarrito);
   function cerrarCarrito(){
     drawer.classList.remove('open');
     overlay.classList.remove('open');
+    desbloquearScroll();
   }
 
   document.getElementById('openMenu').addEventListener('click', ()=>{
     renderMenu();
     menuDrawer.classList.add('open');
     menuOverlay.classList.add('open');
+    bloquearScroll();
   });
   document.getElementById('closeMenu').addEventListener('click', cerrarMenu);
   menuOverlay.addEventListener('click', cerrarMenu);
   function cerrarMenu(){
     menuDrawer.classList.remove('open');
     menuOverlay.classList.remove('open');
+    desbloquearScroll();
   }
 
   function renderMenu(){
@@ -1970,7 +2001,8 @@
 
   auth.onAuthStateChanged(user=>{
     if(user && user.email !== OWNER_EMAIL){
-      loginBtn.textContent = user.email.split('@')[0];
+      const nombreUsuario = user.email.split('@')[0];
+      loginBtn.innerHTML = `<span class="login-avatar">${nombreUsuario.charAt(0).toUpperCase()}</span><span class="login-name">${nombreUsuario}</span>`;
       loginBtn.classList.add('logged-in');
     } else if(!user){
       loginBtn.textContent = 'Iniciar sesión';
