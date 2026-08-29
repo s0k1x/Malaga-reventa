@@ -281,6 +281,13 @@
     display:flex;align-items:center;justify-content:center;
   }
   .card-visual .video-badge svg{width:11px;height:11px;color:#fff;}
+  .sold-out-overlay{
+    position:absolute;inset:0;z-index:2;
+    background:rgba(11,11,12,0.65);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--white);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  }
+  .add-btn[disabled]{background:var(--line);color:var(--muted);cursor:not-allowed;}
   .card-visual .scrim{
     position:absolute;inset:0;
     background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.75) 100%);
@@ -538,14 +545,36 @@
     padding:18px 28px;
     display:flex;align-items:center;justify-content:space-between;
   }
+  .admin-resumen{
+    padding:24px 28px;max-width:640px;margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .admin-resumen-greeting{
+    font-size:15px;color:var(--white);font-weight:600;margin-bottom:2px;
+  }
+  .admin-resumen-sub{font-size:12.5px;color:var(--muted);margin-bottom:16px;}
+  .resumen-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+  }
+  .resumen-item{
+    background:var(--bg-2);border:1px solid var(--line);
+    padding:12px 8px;text-align:center;
+  }
+  .resumen-item .r-num{display:block;font-family:'Anton',sans-serif;font-size:15px;color:var(--white);}
+  .resumen-item .r-label{display:block;font-size:9.5px;color:var(--muted);margin-top:4px;letter-spacing:0.02em;}
+  @media(max-width:420px){
+    .resumen-grid{grid-template-columns:repeat(2,1fr);}
+  }
   .admin-tabs{
     display:flex;gap:26px;padding:0 28px;
     border-bottom:1px solid var(--line);
+    overflow-x:auto;
   }
   .admin-tab{
     background:none;border:none;border-bottom:2px solid transparent;
     color:var(--muted);padding:16px 0 14px;
     font-size:11px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;
+    white-space:nowrap;
   }
   .admin-tab.active{color:var(--white);border-bottom-color:var(--accent-portada);}
   .admin-panel{padding:28px;max-width:640px;margin:0 auto;}
@@ -572,14 +601,39 @@
   .media-preview img, .media-preview video{
     width:100%;max-height:220px;object-fit:cover;border:1px solid var(--line);
   }
+  .media-gallery{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;
+  }
+  .media-thumb{
+    position:relative;width:84px;height:84px;flex-shrink:0;
+    border:1px solid var(--line);overflow:hidden;
+  }
+  .media-thumb img, .media-thumb video{width:100%;height:100%;object-fit:cover;}
+  .media-thumb-remove{
+    position:absolute;top:3px;right:3px;
+    width:20px;height:20px;border-radius:50%;
+    background:rgba(0,0,0,0.65);color:#fff;border:none;font-size:11px;line-height:1;
+  }
   .upload-progress{
     margin-top:10px;font-size:12px;color:var(--accent-portada);font-weight:600;
   }
+  .admin-search{
+    width:100%;padding:11px 13px;margin-bottom:8px;
+    border:1px solid var(--line);background:var(--bg-2);color:var(--white);
+    font-family:inherit;font-size:13.5px;
+  }
+  .admin-search::placeholder{color:var(--muted);}
   .mini-offer-tag{
     display:inline-block;background:var(--accent);color:#fff;
     font-size:9.5px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;
     padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:middle;
   }
+  .mini-hidden-tag{
+    display:inline-block;background:var(--line);color:var(--muted);
+    font-size:9.5px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;
+    padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:middle;
+  }
+  .product-row-hidden{opacity:0.5;}
   .product-row{
     display:flex;align-items:center;gap:14px;
     padding:14px 0;border-bottom:1px solid var(--line);
@@ -595,6 +649,10 @@
   .product-row .p-info span{font-size:11px;color:var(--muted);}
   .product-row .p-price{font-family:'Anton',sans-serif;font-size:15px;text-align:right;}
   .product-row .p-edit{
+    background:none;border:1px solid var(--line);color:var(--muted);
+    width:30px;height:30px;font-size:13px;flex-shrink:0;
+  }
+  .product-row .p-visibility{
     background:none;border:1px solid var(--line);color:var(--muted);
     width:30px;height:30px;font-size:13px;flex-shrink:0;
   }
@@ -656,6 +714,13 @@
   .bar-track{flex:1;height:8px;background:var(--bg-2);border:1px solid var(--line);}
   .bar-fill{height:100%;background:var(--accent);}
   .bar-value{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);min-width:56px;text-align:right;}
+  .chart-row{
+    display:flex;align-items:flex-end;gap:8px;height:120px;padding:10px 0 0;
+  }
+  .chart-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;}
+  .chart-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end;}
+  .chart-bar{width:100%;background:var(--accent-portada);min-height:4px;}
+  .chart-day{font-size:9.5px;color:var(--muted);margin-top:6px;text-transform:uppercase;}
 
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important;}
@@ -782,7 +847,7 @@
     <span class="trust-div"></span>
     <span class="trust-item">Pago seguro</span>
     <span class="trust-div"></span>
-    <span class="trust-item">Envío en 1–2 semanas</span>
+    <span class="trust-item" id="envioTrustItem">Envío en 1–2 semanas</span>
   </div>
 </section>
 
@@ -808,7 +873,7 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
-<footer>Málaga Reventa © 2026 · Málaga, España<br><button id="ownerAccess" class="owner-link">Acceso propietario</button></footer>
+<footer>Málaga Reventa © 2026 · Málaga, España<br><span id="contactoFooter"></span><br><button id="ownerAccess" class="owner-link">Acceso propietario</button></footer>
 
 </div><!-- /#storeApp -->
 
@@ -820,14 +885,17 @@
       <button class="login-btn" id="closeAdmin">Salir al catálogo</button>
     </div>
   </div>
+  <div id="adminResumen" class="admin-resumen"></div>
   <nav class="admin-tabs">
     <button class="admin-tab active" data-panel="adminProductos">Productos</button>
     <button class="admin-tab" data-panel="adminPedidos">Pedidos</button>
     <button class="admin-tab" data-panel="adminEstadisticas">Estadísticas</button>
+    <button class="admin-tab" data-panel="adminConfig">Configuración</button>
   </nav>
   <div id="adminProductos" class="admin-panel"></div>
   <div id="adminPedidos" class="admin-panel" style="display:none;"></div>
   <div id="adminEstadisticas" class="admin-panel" style="display:none;"></div>
+  <div id="adminConfig" class="admin-panel" style="display:none;"></div>
 </div>
 
 <script>
@@ -928,9 +996,11 @@
   }
 
   function renderGrid(){
-    const lista = filtro==='Todos' ? productos : productos.filter(p=>p.cat===filtro);
+    const visibles = productos.filter(p => p.visible !== false);
+    const lista = filtro==='Todos' ? visibles : visibles.filter(p=>p.cat===filtro);
     grid.innerHTML = lista.map(p => {
       const enOferta = p.enOferta && p.precioOferta != null;
+      const sinStock = p.stock != null && p.stock <= 0;
       const precioHTML = enOferta
         ? `<div class="price-box"><span class="price-old">${formatoPrecio(p.precio)}</span><span class="price price-offer">${formatoPrecio(p.precioOferta)}</span></div>`
         : `<span class="price">${formatoPrecio(p.precio)}</span>`;
@@ -939,6 +1009,7 @@
         <div class="card-visual" style="background:${tintDe(p.cat)};">
           ${mediaHTML(p)}
           ${enOferta ? '<span class="offer-ribbon">Oferta</span>' : ''}
+          ${sinStock ? '<div class="sold-out-overlay">Agotado</div>' : ''}
           <div class="scrim"></div>
           <span class="cat-label">${p.cat}</span>
         </div>
@@ -946,13 +1017,13 @@
           <h3>${p.nombre}</h3>
           <div class="card-foot">
             ${precioHTML}
-            <button class="add-btn" data-id="${p.id}">Añadir</button>
+            <button class="add-btn" data-id="${p.id}" ${sinStock ? 'disabled' : ''}>${sinStock ? 'Agotado' : 'Añadir'}</button>
           </div>
         </div>
       </div>
     `;
     }).join('');
-    grid.querySelectorAll('.add-btn').forEach(btn=>{
+    grid.querySelectorAll('.add-btn:not([disabled])').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const id = btn.dataset.id;
         carrito[id] = (carrito[id]||0) + 1;
@@ -1239,16 +1310,28 @@
     productos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
     renderTabs();
     renderGrid();
-    if(adminScreen.classList.contains('visible')) { renderAdminProductos(); renderAdminEstadisticas(); }
+    if(adminScreen.classList.contains('visible')) { renderAdminProductos(); renderAdminEstadisticas(); renderAdminResumen(); }
   }, err=>{
     console.error('Error leyendo productos de Firestore:', err);
   });
 
   db.collection('pedidos').orderBy('timestamp','desc').onSnapshot(snapshot=>{
     pedidos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-    if(adminScreen.classList.contains('visible')) { renderAdminPedidos(); renderAdminEstadisticas(); }
+    if(adminScreen.classList.contains('visible')) { renderAdminPedidos(); renderAdminEstadisticas(); renderAdminResumen(); }
   }, err=>{
     console.error('Error leyendo pedidos de Firestore:', err);
+  });
+
+  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: ''};
+  db.collection('config').doc('general').onSnapshot(doc=>{
+    if(doc.exists){
+      configTienda = {...configTienda, ...doc.data()};
+      document.getElementById('envioTrustItem').textContent = configTienda.envioTexto;
+      document.getElementById('contactoFooter').textContent = configTienda.contactoEmail || '';
+      if(adminScreen.classList.contains('visible')) renderAdminConfig();
+    }
+  }, err=>{
+    console.error('Error leyendo configuración de Firestore:', err);
   });
 
   /* ---------- Panel del propietario (con Firebase Authentication) ---------- */
@@ -1263,6 +1346,8 @@
       renderAdminProductos();
       renderAdminPedidos();
       renderAdminEstadisticas();
+      renderAdminResumen();
+      renderAdminConfig();
       window.scrollTo(0,0);
     } else {
       abrirLoginPropietario();
@@ -1318,6 +1403,8 @@
         renderAdminProductos();
         renderAdminPedidos();
         renderAdminEstadisticas();
+        renderAdminResumen();
+        renderAdminConfig();
         window.scrollTo(0,0);
       }).catch(error=>{
         err.textContent = 'No se pudo entrar: correo o contraseña incorrectos.';
@@ -1331,6 +1418,8 @@
   }
 
   let productoEditando = null; // null = modo "añadir"; si no, es el id del producto que se está editando
+  let busquedaProductos = '';
+  const STOCK_BAJO = 3;
 
   function subirACloudinary(archivo, onProgreso){
     return new Promise((resolve, reject)=>{
@@ -1363,6 +1452,7 @@
       ? `<button class="add-btn" id="npSeedBtn" style="width:100%;margin-bottom:20px;background:transparent;color:var(--muted);border:1px solid var(--line);">Cargar catálogo de ejemplo</button>`
       : '';
     const editando = productos.find(p=>p.id===productoEditando);
+    const galeriaEditando = (editando && editando.medias && editando.medias.length) ? editando.medias : (editando && editando.mediaURL ? [{url:editando.mediaURL, tipo:editando.mediaTipo||'imagen'}] : []);
 
     adminProductosEl.innerHTML = `
       ${seedBtn}
@@ -1386,6 +1476,19 @@
           </div>
         </div>
 
+        <div class="field-row">
+          <div class="field">
+            <label for="npStock">Stock disponible</label>
+            <input id="npStock" type="number" step="1" min="0" placeholder="Ej. 10" value="${editando && editando.stock != null ? editando.stock : ''}">
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <label class="switch-label" style="margin-bottom:12px;">
+              <input type="checkbox" id="npVisible" ${!editando || editando.visible !== false ? 'checked' : ''}>
+              <span>Visible en la tienda</span>
+            </label>
+          </div>
+        </div>
+
         <div class="field offer-toggle-row">
           <label class="switch-label">
             <input type="checkbox" id="npEnOferta" ${editando && editando.enOferta ? 'checked' : ''}>
@@ -1398,10 +1501,15 @@
         </div>
 
         <div class="field">
-          <label for="npMedia">Foto o vídeo del producto</label>
-          <input id="npMedia" type="file" accept="image/*,video/*">
-          <div id="npMediaPreview" class="media-preview">
-            ${editando && editando.mediaURL ? (editando.mediaTipo==='video' ? `<video src="${editando.mediaURL}" muted loop autoplay playsinline></video>` : `<img src="${editando.mediaURL}">`) : ''}
+          <label for="npMedia">Fotos o vídeos del producto (puedes elegir varios)</label>
+          <input id="npMedia" type="file" accept="image/*,video/*" multiple>
+          <div id="npMediaPreview" class="media-gallery">
+            ${galeriaEditando.map((m,i) => `
+              <div class="media-thumb" data-existing-index="${i}">
+                ${m.tipo==='video' ? `<video src="${m.url}" muted loop autoplay playsinline></video>` : `<img src="${m.url}">`}
+                <button type="button" class="media-thumb-remove" data-existing-index="${i}">✕</button>
+              </div>
+            `).join('')}
           </div>
           <div id="npUploadProgress" class="upload-progress" style="display:none;"></div>
         </div>
@@ -1411,46 +1519,66 @@
       </div>
 
       <div class="admin-section-title">Catálogo actual (${productos.length})</div>
-      ${productos.length===0 ? `<div class="empty-admin">Todavía no hay productos en la base de datos.</div>` : productos.map(p => `
-        <div class="product-row">
-          <div class="p-icon" style="background:${tintDe(p.cat)};">${p.mediaURL ? `<img src="${p.mediaURL}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : iconoDe(p.cat)}</div>
-          <div class="p-info">
-            <h4>${p.nombre} ${p.enOferta ? '<span class="mini-offer-tag">Oferta</span>' : ''}</h4>
-            <span>${p.cat}</span>
-          </div>
-          <div class="p-price">
-            ${p.enOferta && p.precioOferta != null
-              ? `<span style="text-decoration:line-through;color:var(--muted);font-size:11px;display:block;">${formatoPrecio(p.precio)}</span>${formatoPrecio(p.precioOferta)}`
-              : formatoPrecio(p.precio)}
-          </div>
-          <button class="p-edit" data-id="${p.id}" aria-label="Editar">✎</button>
-          <button class="p-delete" data-id="${p.id}" aria-label="Eliminar">✕</button>
-        </div>
-      `).join('')}
+      <input id="npBuscar" type="text" placeholder="Buscar producto por nombre…" class="admin-search" value="${busquedaProductos}">
+      ${renderListaProductosAdmin()}
     `;
+
+    let mediasExistentes = [...galeriaEditando]; // se irá recortando si el usuario quita alguna
+    let archivosNuevos = [];
+
+    function repintarGaleria(){
+      const preview = document.getElementById('npMediaPreview');
+      preview.innerHTML =
+        mediasExistentes.map((m,i) => `
+          <div class="media-thumb" data-existing-index="${i}">
+            ${m.tipo==='video' ? `<video src="${m.url}" muted loop autoplay playsinline></video>` : `<img src="${m.url}">`}
+            <button type="button" class="media-thumb-remove" data-existing-index="${i}">✕</button>
+          </div>
+        `).join('') +
+        archivosNuevos.map((f,i) => {
+          const url = URL.createObjectURL(f);
+          return `
+          <div class="media-thumb" data-new-index="${i}">
+            ${f.type.startsWith('video/') ? `<video src="${url}" muted loop autoplay playsinline></video>` : `<img src="${url}">`}
+            <button type="button" class="media-thumb-remove" data-new-index="${i}">✕</button>
+          </div>`;
+        }).join('');
+      preview.querySelectorAll('.media-thumb-remove').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          if(btn.dataset.existingIndex !== undefined && btn.dataset.existingIndex !== ''){
+            mediasExistentes.splice(Number(btn.dataset.existingIndex), 1);
+          } else {
+            archivosNuevos.splice(Number(btn.dataset.newIndex), 1);
+          }
+          repintarGaleria();
+        });
+      });
+    }
+    repintarGaleria();
+
+    document.getElementById('npMedia').addEventListener('change', (e)=>{
+      archivosNuevos = archivosNuevos.concat(Array.from(e.target.files));
+      repintarGaleria();
+    });
 
     const ofertaCheckbox = document.getElementById('npEnOferta');
     ofertaCheckbox.addEventListener('change', ()=>{
       document.getElementById('npPrecioOfertaWrap').style.display = ofertaCheckbox.checked ? 'block' : 'none';
     });
 
-    let archivoSeleccionado = null;
-    document.getElementById('npMedia').addEventListener('change', (e)=>{
-      archivoSeleccionado = e.target.files[0] || null;
-      const preview = document.getElementById('npMediaPreview');
-      if(!archivoSeleccionado){ preview.innerHTML = ''; return; }
-      const url = URL.createObjectURL(archivoSeleccionado);
-      if(archivoSeleccionado.type.startsWith('video/')){
-        preview.innerHTML = `<video src="${url}" muted loop autoplay playsinline controls></video>`;
-      } else {
-        preview.innerHTML = `<img src="${url}">`;
-      }
+    document.getElementById('npBuscar').addEventListener('input', (e)=>{
+      busquedaProductos = e.target.value;
+      document.querySelector('.admin-product-list').outerHTML = renderListaProductosAdmin();
+      engancharListaProductos();
     });
 
     document.getElementById('npGuardarBtn').addEventListener('click', async ()=>{
       const nombre = document.getElementById('npNombre').value.trim();
       const cat = document.getElementById('npCat').value.trim();
       const precio = parseFloat(document.getElementById('npPrecio').value);
+      const stockRaw = document.getElementById('npStock').value;
+      const stock = stockRaw !== '' ? parseInt(stockRaw, 10) : null;
+      const visible = document.getElementById('npVisible').checked;
       const enOferta = document.getElementById('npEnOferta').checked;
       const precioOfertaRaw = document.getElementById('npPrecioOferta').value;
       const precioOferta = precioOfertaRaw !== '' ? parseFloat(precioOfertaRaw) : null;
@@ -1464,22 +1592,28 @@
         return;
       }
 
-      const datos = {nombre, cat, precio, enOferta, precioOferta: enOferta ? precioOferta : null};
+      const datos = {nombre, cat, precio, stock, visible, enOferta, precioOferta: enOferta ? precioOferta : null};
 
       const guardarBtn = document.getElementById('npGuardarBtn');
       guardarBtn.disabled = true;
       guardarBtn.textContent = 'Guardando…';
 
       try{
-        if(archivoSeleccionado){
+        let mediasFinales = [...mediasExistentes];
+        if(archivosNuevos.length){
           const progressEl = document.getElementById('npUploadProgress');
           progressEl.style.display = 'block';
-          const subida = await subirACloudinary(archivoSeleccionado, (pct)=>{
-            progressEl.textContent = 'Subiendo archivo… ' + pct + '%';
-          });
-          datos.mediaURL = subida.url;
-          datos.mediaTipo = subida.tipo;
+          for(let i=0; i<archivosNuevos.length; i++){
+            progressEl.textContent = `Subiendo archivo ${i+1} de ${archivosNuevos.length}…`;
+            const subida = await subirACloudinary(archivosNuevos[i], (pct)=>{
+              progressEl.textContent = `Subiendo archivo ${i+1} de ${archivosNuevos.length}… ${pct}%`;
+            });
+            mediasFinales.push({url: subida.url, tipo: subida.tipo});
+          }
         }
+        datos.medias = mediasFinales;
+        datos.mediaURL = mediasFinales.length ? mediasFinales[0].url : null;
+        datos.mediaTipo = mediasFinales.length ? mediasFinales[0].tipo : null;
 
         if(editando){
           await db.collection('productos').doc(editando.id).update(datos);
@@ -1506,16 +1640,56 @@
         const batch = db.batch();
         SEED_PRODUCTOS.forEach(p=>{
           const ref = db.collection('productos').doc();
-          batch.set(ref, p);
+          batch.set(ref, {...p, visible:true});
         });
         batch.commit().catch(err=>alert('No se pudo cargar el catálogo: ' + err.message));
       });
     }
+    engancharListaProductos();
+  }
+
+  function renderListaProductosAdmin(){
+    const q = busquedaProductos.trim().toLowerCase();
+    const lista = q ? productos.filter(p=>p.nombre.toLowerCase().includes(q)) : productos;
+    if(productos.length===0){
+      return `<div class="empty-admin">Todavía no hay productos en la base de datos.</div>`;
+    }
+    if(lista.length===0){
+      return `<div class="admin-product-list"><div class="empty-admin">No hay productos que coincidan con "${busquedaProductos}".</div></div>`;
+    }
+    return `<div class="admin-product-list">${lista.map(p => `
+      <div class="product-row ${p.visible===false ? 'product-row-hidden' : ''}">
+        <div class="p-icon" style="background:${tintDe(p.cat)};">${p.mediaURL ? `<img src="${p.mediaURL}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : iconoDe(p.cat)}</div>
+        <div class="p-info">
+          <h4>${p.nombre} ${p.enOferta ? '<span class="mini-offer-tag">Oferta</span>' : ''} ${p.visible===false ? '<span class="mini-hidden-tag">Oculto</span>' : ''}</h4>
+          <span>${p.cat}${p.stock != null ? ` · Stock: ${p.stock}${p.stock <= STOCK_BAJO ? ' ⚠️' : ''}` : ''}</span>
+        </div>
+        <div class="p-price">
+          ${p.enOferta && p.precioOferta != null
+            ? `<span style="text-decoration:line-through;color:var(--muted);font-size:11px;display:block;">${formatoPrecio(p.precio)}</span>${formatoPrecio(p.precioOferta)}`
+            : formatoPrecio(p.precio)}
+        </div>
+        <button class="p-visibility" data-id="${p.id}" data-visible="${p.visible!==false}" aria-label="Mostrar u ocultar">${p.visible===false ? '🚫' : '👁️'}</button>
+        <button class="p-edit" data-id="${p.id}" aria-label="Editar">✎</button>
+        <button class="p-delete" data-id="${p.id}" aria-label="Eliminar">✕</button>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  function engancharListaProductos(){
     adminProductosEl.querySelectorAll('.p-edit').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         productoEditando = btn.dataset.id;
         renderAdminProductos();
         adminProductosEl.scrollIntoView({behavior:'smooth'});
+      });
+    });
+    adminProductosEl.querySelectorAll('.p-visibility').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const nuevoVisible = btn.dataset.visible !== 'true';
+        db.collection('productos').doc(btn.dataset.id).update({visible: nuevoVisible}).catch(err=>{
+          alert('No se pudo cambiar la visibilidad: ' + err.message);
+        });
       });
     });
     adminProductosEl.querySelectorAll('.p-delete').forEach(btn=>{
@@ -1587,6 +1761,27 @@
     });
   }
 
+  function contarClientesUnicos(){
+    return new Set(pedidos.map(p=>p.email)).size;
+  }
+
+  function renderAdminResumen(){
+    const el = document.getElementById('adminResumen');
+    const hora = new Date().getHours();
+    const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
+    const totalIngresos = pedidos.reduce((s,p)=>s+p.total,0);
+    el.innerHTML = `
+      <div class="admin-resumen-greeting">${saludo} 👋</div>
+      <div class="admin-resumen-sub">Aquí tienes el resumen de tu tienda.</div>
+      <div class="resumen-grid">
+        <div class="resumen-item"><span class="r-num">${formatoPrecio(totalIngresos)}</span><span class="r-label">💰 Ventas</span></div>
+        <div class="resumen-item"><span class="r-num">${pedidos.length}</span><span class="r-label">📦 Pedidos</span></div>
+        <div class="resumen-item"><span class="r-num">${productos.length}</span><span class="r-label">🛍️ Productos</span></div>
+        <div class="resumen-item"><span class="r-num">${contarClientesUnicos()}</span><span class="r-label">👥 Clientes</span></div>
+      </div>
+    `;
+  }
+
   function renderAdminEstadisticas(){
     const el = document.getElementById('adminEstadisticas');
     if(pedidos.length===0){
@@ -1614,12 +1809,41 @@
 
     const pendientes = pedidos.filter(p=>(p.estado||'Pendiente')==='Pendiente').length;
 
+    // Ventas de los últimos 7 días (a partir del timestamp del pedido)
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const dias = [];
+    for(let i=6; i>=0; i--){
+      const d = new Date(hoy); d.setDate(d.getDate()-i);
+      dias.push(d);
+    }
+    const ventasPorDia = dias.map(d=>{
+      const total = pedidos.reduce((sum,p)=>{
+        if(!p.timestamp || !p.timestamp.toDate) return sum;
+        const fecha = p.timestamp.toDate();
+        return (fecha.toDateString() === d.toDateString()) ? sum + p.total : sum;
+      },0);
+      return {dia: d.toLocaleDateString('es-ES',{weekday:'short'}), total};
+    });
+    const maxDia = Math.max(1, ...ventasPorDia.map(d=>d.total));
+
     el.innerHTML = `
       <div class="stats-grid">
         <div class="stat-box"><span class="stat-num">${formatoPrecio(totalIngresos)}</span><span class="stat-label">Ingresos totales</span></div>
         <div class="stat-box"><span class="stat-num">${numPedidos}</span><span class="stat-label">Pedidos</span></div>
         <div class="stat-box"><span class="stat-num">${formatoPrecio(ticketMedio)}</span><span class="stat-label">Ticket medio</span></div>
         <div class="stat-box"><span class="stat-num">${pendientes}</span><span class="stat-label">Pendientes de enviar</span></div>
+        <div class="stat-box"><span class="stat-num">${contarClientesUnicos()}</span><span class="stat-label">Clientes únicos</span></div>
+        <div class="stat-box"><span class="stat-num">${productos.filter(p=>p.visible!==false).length}</span><span class="stat-label">Productos visibles</span></div>
+      </div>
+
+      <div class="admin-section-title">Ventas de los últimos 7 días</div>
+      <div class="chart-row">
+        ${ventasPorDia.map(d => `
+          <div class="chart-col">
+            <div class="chart-bar-wrap"><div class="chart-bar" style="height:${Math.max(4,(d.total/maxDia)*100)}%;"></div></div>
+            <span class="chart-day">${d.dia}</span>
+          </div>
+        `).join('')}
       </div>
 
       <div class="admin-section-title">Más vendidos</div>
@@ -1640,6 +1864,36 @@
         </div>
       `).join('')}
     `;
+  }
+
+  function renderAdminConfig(){
+    const el = document.getElementById('adminConfig');
+    el.innerHTML = `
+      <div class="admin-section-title">Configuración de la tienda</div>
+      <div class="add-product-form">
+        <div class="field">
+          <label for="cfgEnvio">Texto de plazo de envío</label>
+          <input id="cfgEnvio" type="text" value="${(configTienda.envioTexto||'').replace(/"/g,'&quot;')}" placeholder="Envío en 1–2 semanas">
+        </div>
+        <div class="field">
+          <label for="cfgContacto">Email de contacto (se muestra en el pie de página)</label>
+          <input id="cfgContacto" type="email" value="${(configTienda.contactoEmail||'').replace(/"/g,'&quot;')}" placeholder="contacto@tutienda.com">
+        </div>
+        <button class="add-btn" id="cfgGuardarBtn">Guardar configuración</button>
+        <div id="cfgGuardadoMsg" style="display:none;color:var(--accent-portada);font-size:12px;font-weight:600;margin-top:10px;">Guardado ✓</div>
+      </div>
+    `;
+    document.getElementById('cfgGuardarBtn').addEventListener('click', ()=>{
+      const envioTexto = document.getElementById('cfgEnvio').value.trim();
+      const contactoEmail = document.getElementById('cfgContacto').value.trim();
+      db.collection('config').doc('general').set({envioTexto, contactoEmail}, {merge:true}).then(()=>{
+        const msg = document.getElementById('cfgGuardadoMsg');
+        msg.style.display = 'block';
+        setTimeout(()=> msg.style.display='none', 2000);
+      }).catch(err=>{
+        alert('No se pudo guardar la configuración: ' + err.message);
+      });
+    });
   }
 </script>
 </body>
