@@ -164,16 +164,44 @@
     color:var(--white);font-size:14px;font-weight:600;
     background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;cursor:pointer;
   }
-  .menu-link span.emoji{font-size:16px;width:20px;text-align:center;}
+  .menu-link span.emoji{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+  .menu-link-text{flex:1;}
+  .menu-chevron{color:var(--muted);font-size:18px;flex-shrink:0;}
   .menu-link:hover{color:var(--accent-portada);}
+  .menu-link:hover .menu-chevron{color:var(--accent-portada);}
   .menu-section-label{
     font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);
     margin:20px 0 4px;
   }
   .menu-section-label:first-child{margin-top:0;}
+  .menu-subheader{
+    display:flex;align-items:center;gap:12px;
+    margin:0 -24px 20px;padding:0 24px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .menu-subheader h3{
+    font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;
+    font-size:17px;color:var(--white);margin:0;letter-spacing:0.3px;
+  }
+  .menu-back{
+    background:var(--bg-2);border:1px solid var(--line);color:var(--white);
+    width:32px;height:32px;border-radius:50%;flex-shrink:0;
+    font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0 0 2px;
+  }
+  .menu-back:hover{border-color:var(--white);}
+  .menu-account-chip{
+    display:flex;align-items:center;gap:10px;
+    background:var(--bg-2);border:1px solid var(--line);
+    padding:12px 14px;margin-bottom:22px;
+    font-size:12.5px;color:var(--white);font-weight:600;
+    overflow:hidden;
+  }
+  .menu-account-chip span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .menu-loading{color:var(--muted);font-size:13px;}
   .my-order-card{
     border:1px solid var(--line);padding:14px;margin-top:12px;
   }
+  .my-order-card:first-of-type{margin-top:0;}
   .my-order-card .order-head{
     display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px;
   }
@@ -1457,70 +1485,77 @@
     desbloquearScroll();
   }
 
+  function cabeceraSub(titulo, volver){
+    return `<div class="menu-subheader"><button class="menu-back" data-nav="${volver}" aria-label="Volver">‹</button><h3>${titulo}</h3></div>`;
+  }
+
+  function bindMenuNav(){
+    menuItems.querySelectorAll('[data-nav]').forEach(btn=>{
+      btn.addEventListener('click', ()=> irAMenu(btn.dataset.nav));
+    });
+  }
+
+  function irAMenu(destino){
+    if(destino==='inicio'){ cerrarMenu(); window.scrollTo({top:0, behavior:'smooth'}); return; }
+    if(destino==='categorias'){ cerrarMenu(); document.getElementById('tabs').scrollIntoView({behavior:'smooth'}); return; }
+    if(destino==='faq'){ cerrarMenu(); abrirFAQ(); return; }
+    if(destino==='contacto'){ cerrarMenu(); abrirContacto(); return; }
+    if(destino==='principal'){ renderMenu(); return; }
+    if(destino==='perfil'){ renderPerfilSubmenu(); return; }
+    if(destino==='pedidos'){ abrirMisPedidos(); return; }
+    if(destino==='favoritos'){ abrirMisFavoritos(); return; }
+    if(destino==='direcciones'){ abrirMisDirecciones(); return; }
+    if(destino==='cupones'){ abrirMisCupones(); return; }
+    if(destino==='soporte'){ abrirSoporte(); return; }
+    if(destino==='config'){ abrirConfigCuenta(); return; }
+  }
+
   function renderMenu(){
     const logueado = auth.currentUser && auth.currentUser.email !== OWNER_EMAIL;
     menuItems.innerHTML = `
       <div class="menu-section-label">Navegar</div>
-      <button class="menu-link" id="menuInicio"><span class="emoji">🏠</span> Inicio</button>
-      <button class="menu-link" id="menuCategorias"><span class="emoji">🛍️</span> Ver categorías</button>
+      <button class="menu-link" data-nav="inicio"><span class="emoji">🏠</span><span class="menu-link-text">Inicio</span></button>
+      <button class="menu-link" data-nav="categorias"><span class="emoji">🛍️</span><span class="menu-link-text">Ver categorías</span></button>
 
       <div class="menu-section-label">Cuenta</div>
-      <button class="menu-link" id="menuPerfil"><span class="emoji">👤</span> ${logueado ? 'Mi perfil' : 'Iniciar sesión'}</button>
-
-      <div id="menuContenidoExtra"></div>
+      <button class="menu-link" data-nav="${logueado ? 'perfil' : 'login'}">
+        <span class="emoji">👤</span><span class="menu-link-text">${logueado ? 'Mi perfil' : 'Iniciar sesión'}</span>
+        ${logueado ? '<span class="menu-chevron">›</span>' : ''}
+      </button>
     `;
-
-    document.getElementById('menuInicio').addEventListener('click', ()=>{
-      cerrarMenu();
-      window.scrollTo({top:0, behavior:'smooth'});
-    });
-    document.getElementById('menuCategorias').addEventListener('click', ()=>{
-      cerrarMenu();
-      document.getElementById('tabs').scrollIntoView({behavior:'smooth'});
-    });
-    document.getElementById('menuPerfil').addEventListener('click', ()=>{
-      if(!logueado){
+    bindMenuNav();
+    if(!logueado){
+      menuItems.querySelector('[data-nav="login"]').addEventListener('click', ()=>{
         cerrarMenu();
         abrirLoginCliente();
-        return;
-      }
-      renderPerfilSubmenu();
-    });
+      });
+    }
   }
 
   function renderPerfilSubmenu(){
-    mostrarEnMenu(`
-      <div class="menu-section-label">Perfil — ${auth.currentUser.email}</div>
-      <button class="menu-link" id="pfPedidos"><span class="emoji">📦</span> Mis pedidos</button>
-      <button class="menu-link" id="pfFavoritos"><span class="emoji">❤️</span> Favoritos</button>
-      <button class="menu-link" id="pfDirecciones"><span class="emoji">📍</span> Mis direcciones</button>
-      <button class="menu-link" id="pfCupones"><span class="emoji">🎟️</span> Mis cupones</button>
-      <button class="menu-link" id="pfSoporte"><span class="emoji">💬</span> Soporte</button>
-      <button class="menu-link" id="pfConfig"><span class="emoji">⚙️</span> Configuración</button>
-    `);
-    document.getElementById('pfPedidos').addEventListener('click', abrirMisPedidos);
-    document.getElementById('pfFavoritos').addEventListener('click', abrirMisFavoritos);
-    document.getElementById('pfDirecciones').addEventListener('click', abrirMisDirecciones);
-    document.getElementById('pfCupones').addEventListener('click', abrirMisCupones);
-    document.getElementById('pfSoporte').addEventListener('click', abrirSoporte);
-    document.getElementById('pfConfig').addEventListener('click', abrirConfigCuenta);
-  }
-
-  function botonVolverPerfil(){
-    return `<button class="menu-link" id="volverPerfil" style="border-top:none;padding-top:0;margin-bottom:8px;color:var(--muted);font-size:12px;">← Volver a mi perfil</button>`;
-  }
-  function engancharVolver(){
-    const btn = document.getElementById('volverPerfil');
-    if(btn) btn.addEventListener('click', renderPerfilSubmenu);
+    const nombreUsuario = auth.currentUser.email.split('@')[0];
+    menuItems.innerHTML = cabeceraSub('Mi perfil', 'principal') + `
+      <div class="menu-account-chip">
+        <span class="login-avatar">${nombreUsuario.charAt(0).toUpperCase()}</span>
+        <span>${auth.currentUser.email}</span>
+      </div>
+      <button class="menu-link" data-nav="pedidos"><span class="emoji">📦</span><span class="menu-link-text">Mis pedidos</span><span class="menu-chevron">›</span></button>
+      <button class="menu-link" data-nav="favoritos"><span class="emoji">❤️</span><span class="menu-link-text">Favoritos</span><span class="menu-chevron">›</span></button>
+      <button class="menu-link" data-nav="direcciones"><span class="emoji">📍</span><span class="menu-link-text">Mis direcciones</span><span class="menu-chevron">›</span></button>
+      <button class="menu-link" data-nav="cupones"><span class="emoji">🎟️</span><span class="menu-link-text">Mis cupones</span><span class="menu-chevron">›</span></button>
+      <button class="menu-link" data-nav="soporte"><span class="emoji">💬</span><span class="menu-link-text">Soporte</span><span class="menu-chevron">›</span></button>
+      <button class="menu-link" data-nav="config"><span class="emoji">⚙️</span><span class="menu-link-text">Configuración</span><span class="menu-chevron">›</span></button>
+    `;
+    bindMenuNav();
   }
 
   function abrirMisPedidos(){
-    mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis pedidos</div><p style="color:var(--muted);font-size:13px;">Buscando tus pedidos…</p>`);
-    engancharVolver();
+    menuItems.innerHTML = cabeceraSub('Mis pedidos', 'perfil') + `<p class="menu-loading">Buscando tus pedidos…</p>`;
+    bindMenuNav();
     db.collection('pedidos').where('email','==',auth.currentUser.email).get().then(snapshot=>{
       if(snapshot.empty){
-        mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis pedidos</div><p style="color:var(--muted);font-size:13px;">Todavía no tienes pedidos con este correo.</p>`);
-        engancharVolver();
+        menuItems.innerHTML = cabeceraSub('Mis pedidos', 'perfil') + `<p class="menu-loading">Todavía no tienes pedidos con este correo.</p>`;
+        bindMenuNav();
         return;
       }
       const misPedidos = snapshot.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>{
@@ -1528,24 +1563,21 @@
         const tb = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate() : new Date(0);
         return tb - ta;
       });
-      mostrarEnMenu(botonVolverPerfil() + `
-        <div class="menu-section-label">Mis pedidos (${misPedidos.length})</div>
-        ${misPedidos.map(p => `
-          <div class="my-order-card">
-            <div class="order-head"><span>${p.fecha}</span><span>${formatoPrecio(p.total)}</span></div>
-            ${p.items.map(it=>`<div style="font-size:12.5px;color:var(--muted);">${it.cantidad}× ${it.nombre}</div>`).join('')}
-            ${renderTrackingSteps(p.estado||'Pendiente')}
-            <button class="report-issue-btn" data-id="${p.id}">Reportar un problema</button>
-          </div>
-        `).join('')}
-      `);
-      engancharVolver();
-      document.querySelectorAll('.report-issue-btn').forEach(btn=>{
+      menuItems.innerHTML = cabeceraSub(`Mis pedidos (${misPedidos.length})`, 'perfil') + misPedidos.map(p => `
+        <div class="my-order-card">
+          <div class="order-head"><span>${p.fecha}</span><span>${formatoPrecio(p.total)}</span></div>
+          ${p.items.map(it=>`<div style="font-size:12.5px;color:var(--muted);">${it.cantidad}× ${it.nombre}</div>`).join('')}
+          ${renderTrackingSteps(p.estado||'Pendiente')}
+          <button class="report-issue-btn" data-id="${p.id}">Reportar un problema</button>
+        </div>
+      `).join('');
+      bindMenuNav();
+      menuItems.querySelectorAll('.report-issue-btn').forEach(btn=>{
         btn.addEventListener('click', ()=> abrirReportarProblema(btn.dataset.id, misPedidos.find(p=>p.id===btn.dataset.id)));
       });
     }).catch(err=>{
-      mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis pedidos</div><p style="color:var(--accent);font-size:13px;">No se pudieron cargar: ${err.message}</p>`);
-      engancharVolver();
+      menuItems.innerHTML = cabeceraSub('Mis pedidos', 'perfil') + `<p class="menu-loading" style="color:var(--accent);">No se pudieron cargar: ${err.message}</p>`;
+      bindMenuNav();
     });
   }
 
@@ -1593,17 +1625,15 @@
 
   function abrirMisFavoritos(){
     const favs = productos.filter(p => misFavoritosIds.includes(p.id) && p.visible !== false);
-    mostrarEnMenu(botonVolverPerfil() + `
-      <div class="menu-section-label">Favoritos (${favs.length})</div>
-      ${favs.length===0 ? `<p style="color:var(--muted);font-size:13px;">Todavía no has guardado ningún producto. Toca el ❤️ en cualquier producto de la tienda.</p>` : favs.map(p => `
+    menuItems.innerHTML = cabeceraSub(`Favoritos (${favs.length})`, 'perfil') +
+      (favs.length===0 ? `<p class="menu-loading">Todavía no has guardado ningún producto. Toca el ❤️ en cualquier producto de la tienda.</p>` : favs.map(p => `
         <div class="my-order-card">
           <div class="order-head"><strong style="color:var(--white);">${p.nombre}</strong><span>${formatoPrecio(precioEfectivo(p))}</span></div>
           <button class="report-issue-btn" data-fav-remove="${p.id}">Quitar de favoritos</button>
         </div>
-      `).join('')}
-    `);
-    engancharVolver();
-    document.querySelectorAll('[data-fav-remove]').forEach(btn=>{
+      `).join(''));
+    bindMenuNav();
+    menuItems.querySelectorAll('[data-fav-remove]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         toggleFavorito(btn.dataset.favRemove);
         setTimeout(abrirMisFavoritos, 300);
@@ -1613,20 +1643,18 @@
 
   /* ---------- Mis direcciones ---------- */
   function abrirMisDirecciones(){
-    mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis direcciones</div><p style="color:var(--muted);font-size:13px;">Cargando…</p>`);
-    engancharVolver();
+    menuItems.innerHTML = cabeceraSub('Mis direcciones', 'perfil') + `<p class="menu-loading">Cargando…</p>`;
+    bindMenuNav();
     db.collection('direcciones').doc(auth.currentUser.uid).get().then(doc=>{
-      const direcciones = doc.exists ? (doc.data().lista || []) : [];
-      pintarDirecciones(direcciones);
+      pintarDirecciones(doc.exists ? (doc.data().lista || []) : []);
     }).catch(err=>{
-      mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis direcciones</div><p style="color:var(--accent);font-size:13px;">No se pudieron cargar: ${err.message}</p>`);
-      engancharVolver();
+      menuItems.innerHTML = cabeceraSub('Mis direcciones', 'perfil') + `<p class="menu-loading" style="color:var(--accent);">No se pudieron cargar: ${err.message}</p>`;
+      bindMenuNav();
     });
   }
 
   function pintarDirecciones(direcciones){
-    mostrarEnMenu(botonVolverPerfil() + `
-      <div class="menu-section-label">Mis direcciones (${direcciones.length})</div>
+    menuItems.innerHTML = cabeceraSub(`Mis direcciones (${direcciones.length})`, 'perfil') + `
       ${direcciones.map(d => `
         <div class="my-order-card">
           <div class="order-head"><strong style="color:var(--white);">${d.etiqueta}</strong></div>
@@ -1642,9 +1670,9 @@
         <div class="field"><label for="dirCP">Código postal</label><input id="dirCP" type="text" placeholder="29001"></div>
       </div>
       <button class="confirm-btn" id="dirGuardarBtn">Guardar dirección</button>
-    `);
-    engancharVolver();
-    document.querySelectorAll('[data-dir-remove]').forEach(btn=>{
+    `;
+    bindMenuNav();
+    menuItems.querySelectorAll('[data-dir-remove]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const nuevas = direcciones.filter(d=>d.id !== btn.dataset.dirRemove);
         db.collection('direcciones').doc(auth.currentUser.uid).set({lista: nuevas}, {merge:true}).then(()=> pintarDirecciones(nuevas));
@@ -1666,49 +1694,43 @@
 
   /* ---------- Mis cupones ---------- */
   function abrirMisCupones(){
-    mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Cupones disponibles</div><p style="color:var(--muted);font-size:13px;">Cargando…</p>`);
-    engancharVolver();
+    menuItems.innerHTML = cabeceraSub('Mis cupones', 'perfil') + `<p class="menu-loading">Cargando…</p>`;
+    bindMenuNav();
     db.collection('cupones').where('activo','==',true).get().then(snapshot=>{
-      const cupones = snapshot.docs.map(d=>d.data());
-      mostrarEnMenu(botonVolverPerfil() + `
-        <div class="menu-section-label">Cupones disponibles (${cupones.length})</div>
-        ${cupones.length===0 ? `<p style="color:var(--muted);font-size:13px;">No hay cupones activos ahora mismo.</p>` : cupones.map(c => `
+      const cuponesActivos = snapshot.docs.map(d=>d.data());
+      menuItems.innerHTML = cabeceraSub(`Cupones disponibles (${cuponesActivos.length})`, 'perfil') +
+        (cuponesActivos.length===0 ? `<p class="menu-loading">No hay cupones activos ahora mismo.</p>` : cuponesActivos.map(c => `
           <div class="my-order-card">
             <div class="order-head"><strong class="mono" style="color:var(--white);">${c.codigo}</strong><span>${c.tipo==='porcentaje' ? c.valor+'%' : formatoPrecio(c.valor)}</span></div>
             <div style="font-size:12px;color:var(--muted);">Introduce este código en el checkout para aplicar el descuento.</div>
           </div>
-        `).join('')}
-      `);
-      engancharVolver();
+        `).join(''));
+      bindMenuNav();
     }).catch(err=>{
-      mostrarEnMenu(botonVolverPerfil() + `<div class="menu-section-label">Mis cupones</div><p style="color:var(--accent);font-size:13px;">No se pudieron cargar: ${err.message}</p>`);
-      engancharVolver();
+      menuItems.innerHTML = cabeceraSub('Mis cupones', 'perfil') + `<p class="menu-loading" style="color:var(--accent);">No se pudieron cargar: ${err.message}</p>`;
+      bindMenuNav();
     });
   }
 
   /* ---------- Soporte ---------- */
   function abrirSoporte(){
-    mostrarEnMenu(botonVolverPerfil() + `
-      <div class="menu-section-label">Soporte</div>
-      <button class="menu-link" id="spFAQ"><span class="emoji">❓</span> Preguntas frecuentes</button>
-      <button class="menu-link" id="spContacto"><span class="emoji">✉️</span> Contacto</button>
+    menuItems.innerHTML = cabeceraSub('Soporte', 'perfil') + `
+      <button class="menu-link" data-nav="faq"><span class="emoji">❓</span><span class="menu-link-text">Preguntas frecuentes</span></button>
+      <button class="menu-link" data-nav="contacto"><span class="emoji">✉️</span><span class="menu-link-text">Contacto</span></button>
       <p style="color:var(--muted);font-size:12.5px;margin-top:16px;">¿Problema con un pedido en concreto? Repórtalo desde "Mis pedidos" para que quede asociado a ese pedido.</p>
-    `);
-    engancharVolver();
-    document.getElementById('spFAQ').addEventListener('click', ()=>{ cerrarMenu(); abrirFAQ(); });
-    document.getElementById('spContacto').addEventListener('click', ()=>{ cerrarMenu(); abrirContacto(); });
+    `;
+    bindMenuNav();
   }
 
   /* ---------- Configuración de cuenta ---------- */
   function abrirConfigCuenta(){
-    mostrarEnMenu(botonVolverPerfil() + `
-      <div class="menu-section-label">Configuración de tu cuenta</div>
+    menuItems.innerHTML = cabeceraSub('Configuración de tu cuenta', 'perfil') + `
       <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">Sesión iniciada como<br><strong style="color:var(--white);">${auth.currentUser.email}</strong></p>
       <button class="confirm-btn" id="pfCambiarPass" style="background:transparent;color:var(--muted);border:1px solid var(--line);">Enviar email para cambiar contraseña</button>
       <button class="confirm-btn" id="pfCerrarSesion" style="margin-top:10px;">Cerrar sesión</button>
       <div id="pfPassMsg" style="display:none;color:var(--accent-portada);font-size:12px;font-weight:600;margin-top:10px;"></div>
-    `);
-    engancharVolver();
+    `;
+    bindMenuNav();
     document.getElementById('pfCerrarSesion').addEventListener('click', ()=>{
       auth.signOut();
       cerrarMenu();
@@ -1775,10 +1797,6 @@
         err.style.display = 'block';
       });
     });
-  }
-
-  function mostrarEnMenu(html){
-    document.getElementById('menuContenidoExtra').innerHTML = html;
   }
 
   checkoutBtn.addEventListener('click', ()=>{
