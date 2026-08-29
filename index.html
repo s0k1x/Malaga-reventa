@@ -23,6 +23,14 @@
   5. Ve a Configuración del proyecto (el engranaje) → General → baja hasta "Tus apps" →
      crea una app web → copia el objeto firebaseConfig y pégalo abajo, sustituyendo el de ejemplo.
   6. En Firestore → Reglas, pega las reglas de seguridad que te indico en el chat.
+
+  FOTOS Y VÍDEOS DE PRODUCTOS: Cloudinary (gratis, sin tarjeta).
+  1. Crea una cuenta gratis en https://cloudinary.com
+  2. En el Dashboard verás tu "Cloud name" arriba — cópialo.
+  3. Ve a Settings (el engranaje) → pestaña "Upload" → "Upload presets" → "Add upload preset".
+  4. Ponle un nombre, y en "Signing Mode" elige "Unsigned". Guarda.
+  5. Pega el Cloud name y el nombre del preset en las constantes CLOUDINARY_CLOUD_NAME
+     y CLOUDINARY_UPLOAD_PRESET más abajo, sustituyendo los valores de ejemplo.
 -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -40,6 +48,11 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
   const auth = firebase.auth();
+
+  // TODO: sustituye por tu Cloud name y tu upload preset "unsigned" de Cloudinary
+  // (Cloudinary → Settings → Upload → Upload presets → Add upload preset → Signing mode: Unsigned)
+  const CLOUDINARY_CLOUD_NAME = 'impjfhjy';
+  const CLOUDINARY_UPLOAD_PRESET = 'malaga-productos';
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -246,6 +259,23 @@
     color:rgba(255,255,255,0.14);
   }
   .card-visual .icon-watermark svg{width:100%;height:100%;}
+  .card-visual img, .card-visual video{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  }
+  .card-visual .offer-ribbon{
+    position:absolute;top:12px;right:-30px;
+    background:var(--accent);color:#fff;
+    font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
+    padding:5px 34px;transform:rotate(35deg);
+    box-shadow:0 2px 6px rgba(0,0,0,0.4);
+  }
+  .card-visual .video-badge{
+    position:absolute;top:12px;left:12px;
+    width:26px;height:26px;border-radius:50%;
+    background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.3);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .card-visual .video-badge svg{width:11px;height:11px;color:#fff;}
   .card-visual .scrim{
     position:absolute;inset:0;
     background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.75) 100%);
@@ -297,6 +327,12 @@
     font-size:17px;
     color:var(--white);
   }
+  .price-box{display:flex;flex-direction:column;line-height:1.2;}
+  .price-old{
+    font-family:'Inter',sans-serif;font-size:11.5px;color:var(--muted);
+    text-decoration:line-through;
+  }
+  .price-offer{color:var(--accent);}
   .add-btn{
     background:var(--white);
     color:var(--bg);
@@ -518,6 +554,27 @@
   }
   .add-product-form .field-row{margin-top:16px;}
   .add-product-form .add-btn{width:100%;margin-top:18px;padding:12px;}
+  .offer-toggle-row{margin-top:20px;padding-top:16px;border-top:1px solid var(--line);}
+  .switch-label{
+    display:flex;align-items:center;gap:10px;
+    font-size:13.5px;font-weight:600;color:var(--white);cursor:pointer;
+  }
+  .switch-label input{width:18px;height:18px;accent-color:var(--accent-portada);}
+  .field input[type="file"]{
+    padding:9px;font-size:12.5px;color:var(--muted);
+  }
+  .media-preview{margin-top:12px;}
+  .media-preview img, .media-preview video{
+    width:100%;max-height:220px;object-fit:cover;border:1px solid var(--line);
+  }
+  .upload-progress{
+    margin-top:10px;font-size:12px;color:var(--accent-portada);font-weight:600;
+  }
+  .mini-offer-tag{
+    display:inline-block;background:var(--accent);color:#fff;
+    font-size:9.5px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;
+    padding:2px 7px;border-radius:3px;margin-left:6px;vertical-align:middle;
+  }
   .product-row{
     display:flex;align-items:center;gap:14px;
     padding:14px 0;border-bottom:1px solid var(--line);
@@ -525,12 +582,17 @@
   .product-row .p-icon{
     width:38px;height:38px;flex-shrink:0;border-radius:8px;
     display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
   }
   .product-row .p-icon svg{width:18px;height:18px;color:rgba(255,255,255,0.7);}
   .product-row .p-info{flex:1;}
   .product-row .p-info h4{margin:0 0 3px;font-size:14px;font-weight:600;}
   .product-row .p-info span{font-size:11px;color:var(--muted);}
-  .product-row .p-price{font-family:'Anton',sans-serif;font-size:15px;}
+  .product-row .p-price{font-family:'Anton',sans-serif;font-size:15px;text-align:right;}
+  .product-row .p-edit{
+    background:none;border:1px solid var(--line);color:var(--muted);
+    width:30px;height:30px;font-size:13px;flex-shrink:0;
+  }
   .product-row .p-delete{
     background:none;border:1px solid var(--line);color:var(--accent);
     width:30px;height:30px;font-size:14px;flex-shrink:0;
@@ -706,7 +768,7 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
-<footer>Málaga Reventa — prototipo de tienda. El pago con Stripe está simulado en esta demo.<br><button id="ownerAccess" class="owner-link">Acceso propietario</button></footer>
+<footer>Málaga Reventa © 2026 · Málaga, España<br><button id="ownerAccess" class="owner-link">Acceso propietario</button></footer>
 
 </div><!-- /#storeApp -->
 
@@ -756,6 +818,16 @@
   const DEFAULT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>';
   function tintDe(cat){ return CAT_TINT[cat] || DEFAULT_TINT; }
   function iconoDe(cat){ return ICONS[cat] || DEFAULT_ICON; }
+  function precioEfectivo(p){ return (p.enOferta && p.precioOferta != null) ? p.precioOferta : p.precio; }
+  function mediaHTML(p){
+    if(p.mediaTipo === 'video' && p.mediaURL){
+      return `<video src="${p.mediaURL}" muted loop autoplay playsinline></video><span class="video-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>`;
+    }
+    if(p.mediaURL){
+      return `<img src="${p.mediaURL}" alt="${p.nombre}" loading="lazy">`;
+    }
+    return `<span class="icon-watermark">${iconoDe(p.cat)}</span>`;
+  }
 
   let pedidos = [];
 
@@ -815,22 +887,29 @@
 
   function renderGrid(){
     const lista = filtro==='Todos' ? productos : productos.filter(p=>p.cat===filtro);
-    grid.innerHTML = lista.map(p => `
+    grid.innerHTML = lista.map(p => {
+      const enOferta = p.enOferta && p.precioOferta != null;
+      const precioHTML = enOferta
+        ? `<div class="price-box"><span class="price-old">${formatoPrecio(p.precio)}</span><span class="price price-offer">${formatoPrecio(p.precioOferta)}</span></div>`
+        : `<span class="price">${formatoPrecio(p.precio)}</span>`;
+      return `
       <div class="card">
         <div class="card-visual" style="background:${tintDe(p.cat)};">
-          <span class="icon-watermark">${iconoDe(p.cat)}</span>
+          ${mediaHTML(p)}
+          ${enOferta ? '<span class="offer-ribbon">Oferta</span>' : ''}
           <div class="scrim"></div>
           <span class="cat-label">${p.cat}</span>
         </div>
         <div class="card-body">
           <h3>${p.nombre}</h3>
           <div class="card-foot">
-            <span class="price">${formatoPrecio(p.precio)}</span>
+            ${precioHTML}
             <button class="add-btn" data-id="${p.id}">Añadir</button>
           </div>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
     grid.querySelectorAll('.add-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const id = btn.dataset.id;
@@ -861,10 +940,11 @@
     drawerItems.innerHTML = ids.map(id=>{
       const p = productos.find(x=>x.id===id);
       const cant = carrito[id];
-      subtotal += p.precio * cant;
+      const precio = precioEfectivo(p);
+      subtotal += precio * cant;
       return `
         <div class="item">
-          <div class="item-visual" style="background:${tintDe(p.cat)};">${iconoDe(p.cat)}</div>
+          <div class="item-visual" style="background:${tintDe(p.cat)};">${p.mediaURL ? `<img src="${p.mediaURL}" style="width:100%;height:100%;object-fit:cover;">` : iconoDe(p.cat)}</div>
           <div class="item-info">
             <h4>${p.nombre}</h4>
             <div class="qty-row">
@@ -874,11 +954,11 @@
             </div>
             <button class="remove-link" data-id="${id}" data-action="quitar">Quitar</button>
           </div>
-          <div class="price" style="font-size:14px;">${p.precio * cant} €</div>
+          <div class="price" style="font-size:14px;">${formatoPrecio(precio * cant)}</div>
         </div>
       `;
     }).join('');
-    subtotalEl.textContent = subtotal + ' €';
+    subtotalEl.textContent = formatoPrecio(subtotal);
 
     drawerItems.querySelectorAll('button[data-action]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -911,11 +991,11 @@
     const ids = Object.keys(carrito).filter(id=>carrito[id]>0);
     const subtotal = ids.reduce((sum,id)=>{
       const p = productos.find(x=>x.id===id);
-      return sum + p.precio * carrito[id];
+      return sum + precioEfectivo(p) * carrito[id];
     },0);
     modalContent.innerHTML = `
       <h2>Finalizar compra</h2>
-      <div class="price">Total a pagar: ${subtotal} €</div>
+      <div class="price">Total a pagar: ${formatoPrecio(subtotal)}</div>
       <div class="field">
         <label for="nombre">Nombre completo</label>
         <input id="nombre" type="text" placeholder="Tu nombre">
@@ -943,8 +1023,8 @@
           <input id="cvv" type="text" inputmode="numeric" placeholder="123" maxlength="3">
         </div>
       </div>
-      <div class="pay-note">Pago con tarjeta vía Stripe. En esta demo el cobro está simulado — no se procesa ningún pago real, no introduzcas datos reales.</div>
-      <button class="confirm-btn" id="confirmarPago">Confirmar pedido (simulado)</button>
+      <div class="pay-note">El cobro se procesa mediante Stripe. Esta tienda todavía no tiene una cuenta de Stripe conectada para cobros reales — no introduzcas datos de tarjeta reales.</div>
+      <button class="confirm-btn" id="confirmarPago">Confirmar pedido</button>
     `;
     modalOverlay.classList.add('open');
 
@@ -974,7 +1054,7 @@
     const ids = Object.keys(carrito).filter(id=>carrito[id]>0);
     const items = ids.map(id=>{
       const p = productos.find(x=>x.id===id);
-      return {nombre:p.nombre, cantidad:carrito[id], precio:p.precio};
+      return {nombre:p.nombre, cantidad:carrito[id], precio:precioEfectivo(p)};
     });
     const total = items.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
     db.collection('pedidos').add({
@@ -1235,60 +1315,177 @@
     });
   }
 
+  let productoEditando = null; // null = modo "añadir"; si no, es el id del producto que se está editando
+
+  function subirACloudinary(archivo, onProgreso){
+    return new Promise((resolve, reject)=>{
+      const esVideo = archivo.type.startsWith('video/');
+      const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${esVideo ? 'video' : 'image'}/upload`;
+      const formData = new FormData();
+      formData.append('file', archivo);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', endpoint, true);
+      xhr.upload.onprogress = (e)=>{
+        if(e.lengthComputable) onProgreso(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = ()=>{
+        if(xhr.status >= 200 && xhr.status < 300){
+          const data = JSON.parse(xhr.responseText);
+          resolve({url: data.secure_url, tipo: esVideo ? 'video' : 'imagen'});
+        } else {
+          reject(new Error('Cloudinary respondió con error (revisa el Cloud name y el upload preset).'));
+        }
+      };
+      xhr.onerror = ()=> reject(new Error('Fallo de red al subir el archivo.'));
+      xhr.send(formData);
+    });
+  }
+
   function renderAdminProductos(){
     const seedBtn = productos.length===0
       ? `<button class="add-btn" id="npSeedBtn" style="width:100%;margin-bottom:20px;background:transparent;color:var(--muted);border:1px solid var(--line);">Cargar catálogo de ejemplo</button>`
       : '';
+    const editando = productos.find(p=>p.id===productoEditando);
+
     adminProductosEl.innerHTML = `
       ${seedBtn}
-      <div class="admin-section-title">Añadir producto</div>
+      <div class="admin-section-title">${editando ? 'Editar producto' : 'Añadir producto'}</div>
       <div class="add-product-form">
         <div class="field">
           <label for="npNombre">Nombre</label>
-          <input id="npNombre" type="text" placeholder="Ej. Reloj Casio">
+          <input id="npNombre" type="text" placeholder="Ej. Reloj Casio" value="${editando ? editando.nombre.replace(/"/g,'&quot;') : ''}">
         </div>
         <div class="field-row">
           <div class="field">
             <label for="npCat">Categoría</label>
-            <input id="npCat" type="text" placeholder="Ej. Relojes" list="npCatList">
+            <input id="npCat" type="text" placeholder="Ej. Relojes" list="npCatList" value="${editando ? editando.cat.replace(/"/g,'&quot;') : ''}">
             <datalist id="npCatList">
               ${[...new Set(productos.map(p=>p.cat))].map(c=>`<option value="${c}">`).join('')}
             </datalist>
           </div>
           <div class="field">
             <label for="npPrecio">Precio (€)</label>
-            <input id="npPrecio" type="number" step="0.01" min="0" placeholder="0.00">
+            <input id="npPrecio" type="number" step="0.01" min="0" placeholder="0.00" value="${editando ? editando.precio : ''}">
           </div>
         </div>
-        <button class="add-btn" id="npGuardarBtn">Añadir al catálogo</button>
+
+        <div class="field offer-toggle-row">
+          <label class="switch-label">
+            <input type="checkbox" id="npEnOferta" ${editando && editando.enOferta ? 'checked' : ''}>
+            <span>Poner en oferta</span>
+          </label>
+        </div>
+        <div class="field" id="npPrecioOfertaWrap" style="display:${editando && editando.enOferta ? 'block':'none'};">
+          <label for="npPrecioOferta">Precio de oferta (€)</label>
+          <input id="npPrecioOferta" type="number" step="0.01" min="0" placeholder="0.00" value="${editando && editando.precioOferta != null ? editando.precioOferta : ''}">
+        </div>
+
+        <div class="field">
+          <label for="npMedia">Foto o vídeo del producto</label>
+          <input id="npMedia" type="file" accept="image/*,video/*">
+          <div id="npMediaPreview" class="media-preview">
+            ${editando && editando.mediaURL ? (editando.mediaTipo==='video' ? `<video src="${editando.mediaURL}" muted loop autoplay playsinline></video>` : `<img src="${editando.mediaURL}">`) : ''}
+          </div>
+          <div id="npUploadProgress" class="upload-progress" style="display:none;"></div>
+        </div>
+
+        <button class="add-btn" id="npGuardarBtn">${editando ? 'Guardar cambios' : 'Añadir al catálogo'}</button>
+        ${editando ? `<button class="add-btn" id="npCancelarBtn" style="margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--line);">Cancelar edición</button>` : ''}
       </div>
 
       <div class="admin-section-title">Catálogo actual (${productos.length})</div>
       ${productos.length===0 ? `<div class="empty-admin">Todavía no hay productos en la base de datos.</div>` : productos.map(p => `
         <div class="product-row">
-          <div class="p-icon" style="background:${tintDe(p.cat)};">${iconoDe(p.cat)}</div>
+          <div class="p-icon" style="background:${tintDe(p.cat)};">${p.mediaURL ? `<img src="${p.mediaURL}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : iconoDe(p.cat)}</div>
           <div class="p-info">
-            <h4>${p.nombre}</h4>
+            <h4>${p.nombre} ${p.enOferta ? '<span class="mini-offer-tag">Oferta</span>' : ''}</h4>
             <span>${p.cat}</span>
           </div>
-          <div class="p-price">${formatoPrecio(p.precio)}</div>
+          <div class="p-price">
+            ${p.enOferta && p.precioOferta != null
+              ? `<span style="text-decoration:line-through;color:var(--muted);font-size:11px;display:block;">${formatoPrecio(p.precio)}</span>${formatoPrecio(p.precioOferta)}`
+              : formatoPrecio(p.precio)}
+          </div>
+          <button class="p-edit" data-id="${p.id}" aria-label="Editar">✎</button>
           <button class="p-delete" data-id="${p.id}" aria-label="Eliminar">✕</button>
         </div>
       `).join('')}
     `;
-    document.getElementById('npGuardarBtn').addEventListener('click', ()=>{
+
+    const ofertaCheckbox = document.getElementById('npEnOferta');
+    ofertaCheckbox.addEventListener('change', ()=>{
+      document.getElementById('npPrecioOfertaWrap').style.display = ofertaCheckbox.checked ? 'block' : 'none';
+    });
+
+    let archivoSeleccionado = null;
+    document.getElementById('npMedia').addEventListener('change', (e)=>{
+      archivoSeleccionado = e.target.files[0] || null;
+      const preview = document.getElementById('npMediaPreview');
+      if(!archivoSeleccionado){ preview.innerHTML = ''; return; }
+      const url = URL.createObjectURL(archivoSeleccionado);
+      if(archivoSeleccionado.type.startsWith('video/')){
+        preview.innerHTML = `<video src="${url}" muted loop autoplay playsinline controls></video>`;
+      } else {
+        preview.innerHTML = `<img src="${url}">`;
+      }
+    });
+
+    document.getElementById('npGuardarBtn').addEventListener('click', async ()=>{
       const nombre = document.getElementById('npNombre').value.trim();
       const cat = document.getElementById('npCat').value.trim();
       const precio = parseFloat(document.getElementById('npPrecio').value);
+      const enOferta = document.getElementById('npEnOferta').checked;
+      const precioOfertaRaw = document.getElementById('npPrecioOferta').value;
+      const precioOferta = precioOfertaRaw !== '' ? parseFloat(precioOfertaRaw) : null;
+
       if(!nombre || !cat || isNaN(precio) || precio < 0){
         alert('Rellena nombre, categoría y un precio válido.');
         return;
       }
-      db.collection('productos').add({nombre, cat, precio}).catch(err=>{
-        alert('No se pudo guardar en Firestore: ' + err.message);
-      });
-      // No hace falta volver a pintar a mano: el listener onSnapshot lo hace solo.
+      if(enOferta && (precioOferta === null || isNaN(precioOferta) || precioOferta < 0 || precioOferta >= precio)){
+        alert('El precio de oferta tiene que ser un número válido y menor que el precio normal.');
+        return;
+      }
+
+      const datos = {nombre, cat, precio, enOferta, precioOferta: enOferta ? precioOferta : null};
+
+      const guardarBtn = document.getElementById('npGuardarBtn');
+      guardarBtn.disabled = true;
+      guardarBtn.textContent = 'Guardando…';
+
+      try{
+        if(archivoSeleccionado){
+          const progressEl = document.getElementById('npUploadProgress');
+          progressEl.style.display = 'block';
+          const subida = await subirACloudinary(archivoSeleccionado, (pct)=>{
+            progressEl.textContent = 'Subiendo archivo… ' + pct + '%';
+          });
+          datos.mediaURL = subida.url;
+          datos.mediaTipo = subida.tipo;
+        }
+
+        if(editando){
+          await db.collection('productos').doc(editando.id).update(datos);
+        } else {
+          await db.collection('productos').add(datos);
+        }
+        productoEditando = null;
+      } catch(err){
+        alert('No se pudo guardar: ' + err.message);
+      } finally {
+        guardarBtn.disabled = false;
+        guardarBtn.textContent = editando ? 'Guardar cambios' : 'Añadir al catálogo';
+      }
     });
+
+    if(document.getElementById('npCancelarBtn')){
+      document.getElementById('npCancelarBtn').addEventListener('click', ()=>{
+        productoEditando = null;
+        renderAdminProductos();
+      });
+    }
     if(document.getElementById('npSeedBtn')){
       document.getElementById('npSeedBtn').addEventListener('click', ()=>{
         const batch = db.batch();
@@ -1299,9 +1496,17 @@
         batch.commit().catch(err=>alert('No se pudo cargar el catálogo: ' + err.message));
       });
     }
+    adminProductosEl.querySelectorAll('.p-edit').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        productoEditando = btn.dataset.id;
+        renderAdminProductos();
+        adminProductosEl.scrollIntoView({behavior:'smooth'});
+      });
+    });
     adminProductosEl.querySelectorAll('.p-delete').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const id = btn.dataset.id;
+        if(!confirm('¿Seguro que quieres eliminar este producto?')) return;
         db.collection('productos').doc(id).delete().catch(err=>{
           alert('No se pudo eliminar: ' + err.message);
         });
@@ -1311,7 +1516,7 @@
 
   function renderAdminPedidos(){
     if(pedidos.length===0){
-      adminPedidosEl.innerHTML = `<div class="empty-admin">Aún no hay pedidos en esta sesión.<br>En cuanto alguien complete el checkout simulado, aparecerá aquí.</div>`;
+      adminPedidosEl.innerHTML = `<div class="empty-admin">Todavía no hay pedidos.<br>En cuanto alguien complete una compra, aparecerá aquí.</div>`;
       return;
     }
     adminPedidosEl.innerHTML = pedidos.map(pedido => `
