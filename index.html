@@ -424,7 +424,7 @@
   }
   .intro-bg{
     position:absolute;inset:-14px;
-    background-image:url('fondo-portada.gif');
+    background-image:url('IMG_6599.jpeg');
     background-size:cover;
     background-position:center;
     filter:blur(9px);
@@ -433,6 +433,7 @@
   }
   #introScreen.fade-out{opacity:0;pointer-events:none;}
   #introScreen > *{position:relative;z-index:2;}
+  #introScreen > .intro-bg{position:absolute;z-index:0;}
   .intro-logo{
     font-family:'Anton',sans-serif;
     font-size:15px;letter-spacing:0.3em;text-transform:uppercase;
@@ -441,14 +442,14 @@
   .intro-logo span{color:var(--white);}
   #introScreen .eyebrow{margin-bottom:20px;}
   #introScreen h1{
-    font-size:clamp(48px,11vw,104px);
+    font-size:clamp(46px,10vw,96px);
     line-height:0.94;
     margin:0;
     color:var(--white);
   }
   #introScreen .italic{
     display:block;
-    font-size:clamp(26px,6vw,46px);
+    font-size:clamp(28px,5.5vw,50px);
     color:var(--muted);
     margin-top:8px;
   }
