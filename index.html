@@ -73,14 +73,6 @@
   // TU email de propietario — el único que puede entrar al panel.
   // Tiene que ser EXACTAMENTE el mismo email que usaste en Firebase Authentication → Users.
   const OWNER_EMAIL = 'malagareventa@gmail.com';
-
-  // Stripe — clave PUBLICABLE (pk_...). Esta sí puede estar aquí, está hecha para ser pública.
-  // La clave SECRETA (sk_...) NUNCA va aquí — esa vive solo en Netlify, en variables de entorno.
-  // Ahora mismo son claves de TEST: no cobran dinero real.
-  const STRIPE_PUBLIC_KEY = 'pk_test_51U9tWTIRvT06K4otgUdA3DzKi7ZLMEkEqanVf7j4rIRsjyZc49U0ho9Mc9heSVAPIGlOQ7CKKJPdXFgXMrEtTUtm00wAxEBuOg';
-  // TODO: pega aquí la URL de tu función de Netlify cuando la tengamos creada.
-  const STRIPE_CHECKOUT_ENDPOINT = 'https://stupendous-strudel-166c5b.netlify.app/.netlify/functions/create-checkout';
-  const STRIPE_CHECK_SESSION_ENDPOINT = 'https://stupendous-strudel-166c5b.netlify.app/.netlify/functions/check-session';
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -852,6 +844,11 @@
     padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;
   }
   .order-filter-btn.active{background:var(--white);color:var(--bg);border-color:var(--white);}
+  .pago-check-row{
+    display:flex;align-items:center;gap:8px;
+    margin-top:14px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;
+  }
+  .pago-check-row input{width:16px;height:16px;accent-color:var(--accent-portada);}
   .order-status-row{
     display:flex;align-items:center;gap:8px;
     margin-top:14px;padding-top:14px;border-top:1px solid var(--line);
@@ -1854,7 +1851,7 @@
         <span>He leído y acepto los <button type="button" class="inline-legal-link" data-doc="terminos">Términos y condiciones</button>, la <button type="button" class="inline-legal-link" data-doc="privacidad">Política de privacidad</button> y la <button type="button" class="inline-legal-link" data-doc="devoluciones">Política de devoluciones</button>.</span>
       </label>
       <div id="pagoError" style="display:none;color:var(--accent);font-size:12px;margin-top:10px;font-weight:600;"></div>
-      <button class="confirm-btn" id="confirmarPago" disabled>Ir a pagar con Stripe</button>
+      <button class="confirm-btn" id="confirmarPago" disabled>Ir a pagar</button>
     `;
     modalOverlay.classList.add('open');
 
@@ -1929,7 +1926,7 @@
       document.getElementById('confirmarPago').disabled = !e.target.checked;
     });
 
-    document.getElementById('confirmarPago').addEventListener('click', pagarConStripe);
+    document.getElementById('confirmarPago').addEventListener('click', pagarManual);
   }
 
   function enviarEmailConfirmacion(pedido){
@@ -1947,7 +1944,51 @@
     });
   }
 
-  async function pagarConStripe(){
+  function abrirPestanaTransferencia(pedidoId, total){
+    const ref = `MR-${pedidoId.slice(0,8).toUpperCase()}`;
+    const win = window.open('', '_blank');
+    if(!win) return; // el navegador bloqueó la ventana emergente
+    win.document.write(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Datos para tu transferencia — Málaga Reventa</title>
+        <style>
+          body{font-family:-apple-system,Inter,sans-serif;background:#0B0B0C;color:#F5F4F1;margin:0;padding:32px 24px 60px;}
+          .box{max-width:420px;margin:0 auto;}
+          h1{font-size:22px;margin:0 0 6px;}
+          .muted{color:#9A9A97;font-size:13.5px;line-height:1.6;margin:0 0 28px;}
+          .card{background:#1A1A1D;border:1px solid #333336;padding:20px;margin-bottom:14px;}
+          .card .label{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#9A9A97;margin-bottom:6px;}
+          .card .value{font-size:17px;font-weight:600;word-break:break-word;}
+          .total{background:#1A1A1D;border:1px solid #D6303F;padding:20px;margin-bottom:24px;}
+          .total .value{color:#D6303F;font-size:22px;}
+          .note{background:#1A1A1D;border:1px solid #333336;padding:16px;font-size:13px;color:#9A9A97;line-height:1.6;}
+        </style>
+      </head>
+      <body>
+        <div class="box">
+          <h1>Datos para tu transferencia</h1>
+          <p class="muted">Haz la transferencia con estos datos. En cuanto la recibamos, revisaremos el pago y tu pedido se pondrá en marcha.</p>
+
+          ${configTienda.titularCuenta ? `<div class="card"><div class="label">Titular</div><div class="value">${configTienda.titularCuenta}</div></div>` : ''}
+          ${configTienda.iban ? `<div class="card"><div class="label">IBAN</div><div class="value">${configTienda.iban}</div></div>` : ''}
+          ${configTienda.banco ? `<div class="card"><div class="label">Banco</div><div class="value">${configTienda.banco}</div></div>` : ''}
+          <div class="card"><div class="label">Concepto (muy importante ponerlo)</div><div class="value">${ref}</div></div>
+
+          <div class="total"><div class="label">Importe a transferir</div><div class="value">${formatoPrecio(total)}</div></div>
+
+          <div class="note">Una vez hecha la transferencia, revisaremos el pago y tu pedido se pondrá en marcha${configTienda.tiempoRespuesta ? ' (normalmente en ' + configTienda.tiempoRespuesta + ')' : ''}. ${configTienda.contactoEmail ? 'Si tienes dudas, escríbenos a ' + configTienda.contactoEmail + '.' : ''}</div>
+        </div>
+      </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
+  async function pagarManual(){
     const nombre = document.getElementById('nombre')?.value.trim();
     const email = document.getElementById('email')?.value.trim();
     const direccion = document.getElementById('direccion')?.value.trim();
@@ -1955,7 +1996,7 @@
     errorEl.style.display = 'none';
 
     if(!nombre || !email || !direccion){
-      errorEl.textContent = 'Rellena nombre, correo y dirección antes de pagar.';
+      errorEl.textContent = 'Rellena nombre, correo y dirección antes de continuar.';
       errorEl.style.display = 'block';
       return;
     }
@@ -1971,14 +2012,12 @@
       descuento = cuponAplicado.tipo==='porcentaje' ? subtotal*(cuponAplicado.valor/100) : Math.min(cuponAplicado.valor, subtotal);
     }
     const ratio = descuento > 0 ? (subtotal - descuento) / subtotal : 1;
-    // Aplicamos el descuento del cupón repartido proporcionalmente en cada artículo,
-    // porque Stripe no admite líneas de importe negativo.
     const itemsConDescuento = items.map(it => ({...it, precio: Math.round(it.precio * ratio * 100) / 100}));
     const total = itemsConDescuento.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
 
     const boton = document.getElementById('confirmarPago');
     boton.disabled = true;
-    boton.textContent = 'Preparando el pago…';
+    boton.textContent = 'Registrando pedido…';
 
     try{
       const pedidoRef = await db.collection('pedidos').add({
@@ -1987,74 +2026,37 @@
         nombre, email, direccion,
         items: itemsConDescuento, total,
         cupon: cuponAplicado ? cuponAplicado.codigo : null,
-        pagado: false
+        pagado: false,
+        metodoPago: 'Manual'
       });
 
-      const successUrl = `${window.location.origin}${window.location.pathname}?pago=exito&pedido=${pedidoRef.id}&session_id={CHECKOUT_SESSION_ID}`;
-      const cancelUrl = `${window.location.origin}${window.location.pathname}?pago=cancelado&pedido=${pedidoRef.id}`;
-
-      const res = await fetch(STRIPE_CHECKOUT_ENDPOINT, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ items: itemsConDescuento, email, successUrl, cancelUrl })
-      });
-      const data = await res.json();
-      if(!res.ok || !data.url){
-        throw new Error(data.error || 'No se pudo crear el pago.');
-      }
-
-      await pedidoRef.update({ stripeSessionId: data.id });
       if(cuponAplicado){
         db.collection('cupones').doc(cuponAplicado.id).update({usosActuales: firebase.firestore.FieldValue.increment(1)}).catch(()=>{});
       }
 
-      window.location.href = data.url; // redirige a la página de pago de Stripe
+      abrirPestanaTransferencia(pedidoRef.id, total);
+
+      modalContent.innerHTML = `
+        <div class="success">
+          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
+          <h2>Pedido registrado</h2>
+          <p style="color:var(--muted);font-size:13.5px;">Se ha abierto una pestaña con los datos para hacer la transferencia. Total: ${formatoPrecio(total)}.</p>
+          <button class="confirm-btn" id="cerrarModal">Cerrar</button>
+        </div>
+      `;
+      carrito = {};
+      actualizarCarrito();
+      document.getElementById('cerrarModal').addEventListener('click', ()=>{
+        modalOverlay.classList.remove('open');
+        cerrarCarrito();
+      });
     } catch(err){
-      errorEl.textContent = 'No se pudo iniciar el pago: ' + err.message;
+      errorEl.textContent = 'No se pudo registrar el pedido: ' + err.message;
       errorEl.style.display = 'block';
       boton.disabled = false;
-      boton.textContent = 'Ir a pagar con Stripe';
+      boton.textContent = 'Ir a pagar';
     }
   }
-
-  // Al volver de Stripe (pago aceptado o cancelado), comprobamos qué pasó.
-  (function comprobarVueltaDeStripe(){
-    const params = new URLSearchParams(window.location.search);
-    const pago = params.get('pago');
-    const pedidoId = params.get('pedido');
-    const sessionId = params.get('session_id');
-    if(!pago || !pedidoId) return;
-
-    if(pago==='exito' && sessionId){
-      fetch(`${STRIPE_CHECK_SESSION_ENDPOINT}?session_id=${sessionId}`)
-        .then(r=>r.json())
-        .then(data=>{
-          if(data.pagado){
-            db.collection('pedidos').doc(pedidoId).update({pagado:true}).then(()=>{
-              return db.collection('pedidos').doc(pedidoId).get();
-            }).then(doc=>{
-              if(doc.exists) enviarEmailConfirmacion(doc.data());
-            });
-            carrito = {};
-            modalContent.innerHTML = `
-              <div class="success">
-                <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
-                <h2>¡Pago confirmado!</h2>
-                <p style="color:var(--muted);font-size:13.5px;">Tu pedido se ha registrado y el pago se ha procesado correctamente.</p>
-                <button class="confirm-btn" id="cerrarModal">Cerrar</button>
-              </div>
-            `;
-            modalOverlay.classList.add('open');
-            document.getElementById('cerrarModal').addEventListener('click', ()=> modalOverlay.classList.remove('open'));
-          }
-        })
-        .catch(err=> console.error('No se pudo verificar el pago:', err));
-    } else if(pago==='cancelado'){
-      db.collection('pedidos').doc(pedidoId).delete().catch(()=>{});
-    }
-    // Limpiamos la URL para que no se quede el session_id ahí colgado si recargan.
-    window.history.replaceState({}, document.title, window.location.pathname);
-  })();
 
   modalOverlay.addEventListener('click', (e)=>{
     if(e.target===modalOverlay) modalOverlay.classList.remove('open');
@@ -2172,7 +2174,7 @@
     console.error('Error leyendo pedidos de Firestore:', err);
   });
 
-  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: '', whatsapp: '', tiempoRespuesta: '24–48 horas laborables'};
+  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: '', whatsapp: '', tiempoRespuesta: '24–48 horas laborables', titularCuenta: '', iban: '', banco: ''};
   db.collection('config').doc('general').onSnapshot(doc=>{
     if(doc.exists){
       configTienda = {...configTienda, ...doc.data()};
@@ -2606,6 +2608,10 @@
           <div class="order-line"><span>${it.cantidad}× ${it.nombre}</span><span>${formatoPrecio(it.precio*it.cantidad)}</span></div>
         `).join('')}
         <div class="order-total"><span>Total</span><span>${formatoPrecio(pedido.total)}</span></div>
+        <label class="pago-check-row">
+          <input type="checkbox" class="pago-check" data-id="${pedido.id}" ${pedido.pagado ? 'checked' : ''}>
+          <span>${pedido.pagado ? 'Pagado ✓' : 'Marcar como pagado'}</span>
+        </label>
         <div class="order-status-row">
           <span class="order-status-dot" style="background:${ESTADO_COLOR[pedido.estado || 'Pendiente']};"></span>
           <select class="order-status-select" data-id="${pedido.id}">
@@ -2617,6 +2623,13 @@
     `).join('')}
     `;
 
+    adminPedidosEl.querySelectorAll('.pago-check').forEach(chk=>{
+      chk.addEventListener('change', ()=>{
+        db.collection('pedidos').doc(chk.dataset.id).update({pagado: chk.checked}).catch(err=>{
+          alert('No se pudo actualizar: ' + err.message);
+        });
+      });
+    });
     adminPedidosEl.querySelectorAll('.order-filter-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         filtroEstadoPedidos = btn.dataset.estado;
@@ -2766,6 +2779,21 @@
           <label for="cfgTiempoResp">Tiempo de respuesta habitual</label>
           <input id="cfgTiempoResp" type="text" value="${(configTienda.tiempoRespuesta||'').replace(/"/g,'&quot;')}" placeholder="24–48 horas laborables">
         </div>
+
+        <div class="pay-divider">Datos bancarios (para el pago por transferencia)</div>
+        <div class="field">
+          <label for="cfgTitular">Titular de la cuenta</label>
+          <input id="cfgTitular" type="text" value="${(configTienda.titularCuenta||'').replace(/"/g,'&quot;')}" placeholder="Tu nombre o el de tu negocio">
+        </div>
+        <div class="field">
+          <label for="cfgIban">IBAN</label>
+          <input id="cfgIban" type="text" value="${(configTienda.iban||'').replace(/"/g,'&quot;')}" placeholder="ES00 0000 0000 0000 0000 0000">
+        </div>
+        <div class="field">
+          <label for="cfgBanco">Banco (opcional)</label>
+          <input id="cfgBanco" type="text" value="${(configTienda.banco||'').replace(/"/g,'&quot;')}" placeholder="Ej. CaixaBank">
+        </div>
+
         <button class="add-btn" id="cfgGuardarBtn">Guardar configuración</button>
         <div id="cfgGuardadoMsg" style="display:none;color:var(--accent-portada);font-size:12px;font-weight:600;margin-top:10px;">Guardado ✓</div>
       </div>
@@ -2775,7 +2803,10 @@
       const contactoEmail = document.getElementById('cfgContacto').value.trim();
       const whatsapp = document.getElementById('cfgWhatsapp').value.trim();
       const tiempoRespuesta = document.getElementById('cfgTiempoResp').value.trim();
-      db.collection('config').doc('general').set({envioTexto, contactoEmail, whatsapp, tiempoRespuesta}, {merge:true}).then(()=>{
+      const titularCuenta = document.getElementById('cfgTitular').value.trim();
+      const iban = document.getElementById('cfgIban').value.trim();
+      const banco = document.getElementById('cfgBanco').value.trim();
+      db.collection('config').doc('general').set({envioTexto, contactoEmail, whatsapp, tiempoRespuesta, titularCuenta, iban, banco}, {merge:true}).then(()=>{
         const msg = document.getElementById('cfgGuardadoMsg');
         msg.style.display = 'block';
         setTimeout(()=> msg.style.display='none', 2000);
