@@ -8,13 +8,10 @@
 <link rel="apple-touch-icon" href="DB636764-D086-48CC-9855-FFA0F043BE60.png">
 <!--
   NOTA PARA EL DESARROLLADOR:
-  Este es un PROTOTIPO. El checkout está simulado (no cobra dinero real).
-  Para conectar Stripe de verdad necesitas:
-    1. Un backend (Node/Python/etc.) que cree un "Payment Intent" con tu
-       clave SECRETA de Stripe (nunca poner la clave secreta aquí, en el frontend).
-    2. Reemplazar la función simularPago() por una llamada a tu backend
-       usando Stripe.js + Stripe Elements para capturar la tarjeta de forma segura.
-    3. Un webhook en tu backend que confirme el pago antes de marcar el pedido como pagado.
+  PAGO: se gestiona por Bizum de forma manual. El cliente confirma el pedido, se genera
+  un número de seguimiento único, y el propietario marca el pedido como pagado desde el
+  panel una vez recibe el Bizum. El stock se descuenta automáticamente al confirmar el
+  pedido (con protección para que dos personas no compren el mismo último artículo).
 
   BASE DE DATOS: Firebase / Firestore.
   1. Ve a https://console.firebase.google.com, crea un proyecto.
@@ -336,6 +333,52 @@
   .trust-div{width:1px;height:12px;background:var(--line);}
 
   /* ---------- Category tabs ---------- */
+  .newsletter-box{
+    max-width:520px;margin:0 auto;padding:22px 24px;
+    background:var(--bg-2);border:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;
+  }
+  .newsletter-text strong{display:block;font-size:15px;color:var(--white);margin-bottom:3px;}
+  .newsletter-text span{font-size:12.5px;color:var(--muted);}
+  .newsletter-form{display:flex;width:100%;max-width:380px;gap:8px;}
+  .newsletter-form input{
+    flex:1;padding:11px 13px;border:1px solid var(--line);background:var(--bg);
+    color:var(--white);font-family:inherit;font-size:13.5px;
+  }
+  .newsletter-form input:focus{border-color:var(--accent-portada);outline:none;}
+  .newsletter-form button{
+    background:var(--white);color:var(--bg);border:none;
+    padding:11px 16px;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .newsletter-msg{font-size:12.5px;font-weight:600;color:var(--accent-portada);}
+  .ruleta-wrap{position:relative;width:240px;height:240px;margin:20px auto 0;}
+  .ruleta-puntero{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:22px;color:var(--white);z-index:2;}
+  .ruleta-wheel{
+    width:240px;height:240px;border-radius:50%;position:relative;
+    border:4px solid var(--white);
+    transition:transform 4.2s cubic-bezier(.12,.67,.1,1);
+  }
+  .ruleta-label{
+    position:absolute;top:50%;left:50%;
+    font-size:10.5px;font-weight:800;color:#fff;text-align:center;width:76px;
+    text-transform:uppercase;letter-spacing:0.02em;
+    text-shadow:0 1px 3px rgba(0,0,0,0.7);
+    margin-left:-38px;margin-top:-8px;
+  }
+  .ruleta-fab{
+    position:fixed;bottom:22px;right:18px;z-index:25;
+    width:56px;height:56px;border-radius:50%;
+    background:var(--accent);color:#fff;border:none;font-size:24px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.4);
+    animation:ruletaPulso 2.4s ease-in-out infinite;
+  }
+  @keyframes ruletaPulso{
+    0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ruleta-fab{animation:none;}
+  }
   .tabs{
     display:flex;flex-wrap:nowrap;gap:26px;
     justify-content:flex-start;
@@ -424,6 +467,10 @@
     color:var(--white);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
   }
   .add-btn[disabled]{background:var(--line);color:var(--muted);cursor:not-allowed;}
+  .stock-urgente{
+    display:inline-block;color:var(--accent);font-size:10.5px;font-weight:700;
+    letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;
+  }
   .card-visual .scrim{
     position:absolute;inset:0;
     background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.75) 100%);
@@ -795,6 +842,11 @@
   .media-preview img, .media-preview video{
     width:100%;max-height:220px;object-fit:cover;border:1px solid var(--line);
   }
+  .variant-admin-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 0;border-bottom:1px solid var(--line);
+    font-size:12.5px;color:var(--white);
+  }
   .media-gallery{
     display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;
   }
@@ -1066,6 +1118,20 @@
   </div>
 </section>
 
+<section class="newsletter-box" id="newsletterBox">
+  <div class="newsletter-text">
+    <strong>Llévate un 10% en tu primera compra</strong>
+    <span>Apúntate y te mandamos un cupón al momento.</span>
+  </div>
+  <form id="newsletterForm" class="newsletter-form">
+    <input type="email" id="newsletterEmail" placeholder="tucorreo@ejemplo.com" required>
+    <button type="submit">Quiero mi cupón</button>
+  </form>
+  <div id="newsletterMsg" class="newsletter-msg" style="display:none;"></div>
+</section>
+
+<button class="ruleta-fab" id="abrirRuletaBtn" aria-label="Girar la ruleta de descuentos">🎡</button>
+
 <nav class="tabs" id="tabs"></nav>
 
 <section class="grid" id="grid"></section>
@@ -1224,7 +1290,7 @@
       titulo: 'Política de privacidad',
       html: `
         <h3>Responsable del tratamiento</h3>
-        <p>El responsable de los datos personales recogidos en esta web es <span class="placeholder">[NOMBRE COMPLETO O RAZÓN SOCIAL DEL TITULAR]</span>, con NIF/CIF <span class="placeholder">[NIF/CIF]</span> y domicilio en <span class="placeholder">[DIRECCIÓN COMPLETA]</span>. Puedes contactar en <span class="placeholder">[EMAIL DE CONTACTO]</span>.</p>
+        <p>El responsable de los datos personales recogidos en esta web es el titular identificado en el <strong style="color:var(--white);">Aviso legal</strong>. Puedes contactar a través de los datos de contacto indicados en esta web.</p>
         <h3>Qué datos recogemos</h3>
         <p>Al comprar o crear una cuenta recogemos: nombre, correo electrónico y dirección de envío. Al iniciar sesión con Google, recibimos el correo asociado a esa cuenta.</p>
         <h3>Para qué los usamos</h3>
@@ -1234,20 +1300,20 @@
         <h3>Cuánto tiempo los conservamos</h3>
         <p>Conservamos los datos de tus pedidos mientras mantengas tu cuenta o durante el tiempo exigido por la normativa fiscal y de consumo aplicable.</p>
         <h3>Tus derechos</h3>
-        <p>Puedes solicitar acceso, rectificación, supresión, oposición o portabilidad de tus datos escribiendo a <span class="placeholder">[EMAIL DE CONTACTO]</span>.</p>
+        <p>Puedes solicitar acceso, rectificación, supresión, oposición o portabilidad de tus datos escribiendo a través de los datos de contacto de esta web.</p>
       `
     },
     terminos: {
       titulo: 'Términos y condiciones',
       html: `
         <h3>Objeto</h3>
-        <p>Estas condiciones regulan la compra de productos a través de esta web, operada por <span class="placeholder">[NOMBRE COMPLETO O RAZÓN SOCIAL DEL TITULAR]</span>.</p>
+        <p>Estas condiciones regulan la compra de productos a través de esta web, operada por el titular identificado en el Aviso legal.</p>
         <h3>Proceso de compra</h3>
         <p>Al añadir productos a la bolsa y confirmar el pedido, realizas una oferta de compra. El contrato se entiende formalizado cuando confirmas el pedido en el checkout.</p>
         <h3>Precios</h3>
         <p>Los precios se muestran en euros e incluyen los impuestos aplicables, salvo que se indique lo contrario. Los gastos de envío, si los hubiera, se mostrarán antes de confirmar la compra.</p>
         <h3>Forma de pago</h3>
-        <p>El pago se procesa mediante Stripe. <span class="placeholder">[Actualiza este párrafo cuando tengas Stripe conectado de verdad: mientras tanto, ningún pago se cobra realmente.]</span></p>
+        <p>El pago se realiza mediante los métodos indicados en el checkout (por ejemplo, Bizum). El pedido queda pendiente de confirmación hasta que se verifica la recepción del pago.</p>
         <h3>Disponibilidad</h3>
         <p>Los productos están sujetos a disponibilidad de stock. Si un producto se agota tras tu compra, te lo comunicaremos y se te reembolsará el importe correspondiente.</p>
         <h3>Derecho de desistimiento</h3>
@@ -1262,13 +1328,13 @@
         <h3>Plazo de entrega</h3>
         <p id="envioPolPlazo">Nuestro plazo de envío habitual es de <span class="placeholder">1–2 semanas</span> desde la confirmación del pedido.</p>
         <h3>Zona de envío</h3>
-        <p><span class="placeholder">[Indica aquí a qué países o zonas enviáis, por ejemplo: España peninsular, Baleares, Canarias, Unión Europea...]</span></p>
+        <p>Realizamos envíos dentro de España. Si necesitas enviar fuera de España, contacta con nosotros antes de comprar para confirmar disponibilidad.</p>
         <h3>Gastos de envío</h3>
-        <p><span class="placeholder">[Indica aquí el coste del envío, o si es gratuito a partir de cierto importe]</span></p>
+        <p>El coste del envío, si lo hubiera, se indicará antes de confirmar el pedido.</p>
         <h3>Seguimiento</h3>
         <p>Puedes consultar el estado de tu pedido en cualquier momento desde el menú ☰ → "Mis pedidos", iniciando sesión con el correo que usaste al comprar.</p>
         <h3>Incidencias</h3>
-        <p>Si tu pedido no llega en el plazo indicado o llega dañado, contacta con nosotros en <span class="placeholder">[EMAIL DE CONTACTO]</span> y lo resolveremos.</p>
+        <p>Si tu pedido no llega en el plazo indicado o llega dañado, contacta con nosotros a través de los datos de esta web y lo resolveremos.</p>
       `
     },
     devoluciones: {
@@ -1279,14 +1345,14 @@
         <h3>Condiciones para devolver</h3>
         <ul>
           <li>El producto debe estar sin usar y en su embalaje original.</li>
-          <li>Debes conservar la prueba de compra (email de confirmación del pedido).</li>
+          <li>Debes conservar la prueba de compra (número de seguimiento del pedido).</li>
         </ul>
         <h3>Cómo solicitar una devolución</h3>
-        <p>Escribe a <span class="placeholder">[EMAIL DE CONTACTO]</span> indicando tu número de pedido y el motivo. Te confirmaremos cómo y a dónde enviar el producto.</p>
+        <p>Escríbenos a través de los datos de contacto de esta web indicando tu número de seguimiento y el motivo. Te confirmaremos cómo y a dónde enviar el producto.</p>
         <h3>Reembolso</h3>
-        <p>Una vez recibido y revisado el producto devuelto, te reembolsaremos el importe usando el mismo método de pago que usaste en la compra, en un plazo máximo de 14 días.</p>
+        <p>Una vez recibido y revisado el producto devuelto, te reembolsaremos el importe, en un plazo máximo de 14 días.</p>
         <h3>Gastos de la devolución</h3>
-        <p><span class="placeholder">[Indica aquí si los gastos de envío de la devolución los asume el cliente o la tienda]</span></p>
+        <p>Salvo que se indique lo contrario, los gastos de envío de la devolución corren a cargo del cliente.</p>
         <h3>Excepciones</h3>
         <p>No se aceptan devoluciones de productos que, por razones de higiene o haber sido desprecintados, no sean aptos para ser devueltos.</p>
       `
@@ -1336,7 +1402,7 @@
     {p: '¿Cuánto tarda en llegar mi pedido?', r: 'El plazo habitual se muestra en la portada y en la Política de envíos — normalmente entre 1 y 2 semanas desde que confirmas la compra.'},
     {p: '¿Cómo sé en qué estado está mi pedido?', r: 'Inicia sesión con el correo que usaste al comprar y ve al menú ☰ → "Mis pedidos". Ahí verás el estado actualizado (Pendiente, Enviado, Entregado...).'},
     {p: '¿Puedo devolver un producto?', r: 'Sí, tienes 14 días naturales desde que lo recibes. Consulta la Política de devoluciones para ver cómo hacerlo.'},
-    {p: '¿Es seguro pagar en esta web?', r: 'El pago se procesa a través de Stripe, una de las pasarelas de pago más usadas del mundo. Nunca guardamos tus datos de tarjeta en nuestros servidores.'},
+    {p: '¿Es seguro pagar en esta web?', r: 'El pago se realiza directamente entre tú y la tienda por Bizum, con un número de seguimiento único por pedido. No pedimos ni guardamos datos de tarjeta en ningún momento.'},
     {p: '¿Qué hago si mi pedido llega con un problema?', r: 'Ve a "Mis pedidos" en el menú ☰, y en el pedido correspondiente pulsa "Reportar un problema" — lo revisaremos y te responderemos por correo.'},
     {p: '¿En cuánto tiempo responden a mis mensajes?', r: 'Normalmente respondemos en ' + '<span id="faqTiempoRespuesta">' + '24–48 horas laborables' + '</span>' + '.'},
   ];
@@ -1382,6 +1448,143 @@
   }
   document.getElementById('footerContacto').addEventListener('click', abrirContacto);
 
+  /* ---------- Ruleta de descuentos ---------- */
+  const SEGMENTOS_RULETA = [
+    {label:'5% dto', tipo:'porcentaje', valor:5,  peso:25, color:'#7C8F5D'},
+    {label:'Sigue intentando', tipo:null, valor:0, peso:30, color:'#232326'},
+    {label:'10% dto', tipo:'porcentaje', valor:10, peso:20, color:'#3D6BD6'},
+    {label:'2€ dto', tipo:'fijo', valor:2, peso:15, color:'#A9782F'},
+    {label:'15% dto', tipo:'porcentaje', valor:15, peso:7,  color:'#D6303F'},
+    {label:'20% dto', tipo:'porcentaje', valor:20, peso:3,  color:'#F2A93B'}
+  ];
+  let yaGiroRuleta = false;
+
+  function elegirSegmentoRuleta(){
+    const totalPeso = SEGMENTOS_RULETA.reduce((s,x)=>s+x.peso,0);
+    let r = Math.random()*totalPeso;
+    for(let i=0;i<SEGMENTOS_RULETA.length;i++){
+      if(r < SEGMENTOS_RULETA[i].peso) return i;
+      r -= SEGMENTOS_RULETA[i].peso;
+    }
+    return 0;
+  }
+
+  function cerrarModalLegal(){
+    modalOverlay.classList.remove('open');
+    modalContent.classList.remove('modal-legal');
+  }
+
+  function abrirRuleta(){
+    modalContent.classList.add('modal-legal');
+    if(yaGiroRuleta){
+      modalContent.innerHTML = `
+        <h2>Ya has girado</h2>
+        <p style="color:var(--muted);font-size:13.5px;">Solo se puede girar una vez por visita. ¡Gracias por pasarte!</p>
+        <button class="confirm-btn" id="cerrarModal">Cerrar</button>
+      `;
+      modalOverlay.classList.add('open');
+      document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
+      return;
+    }
+
+    const n = SEGMENTOS_RULETA.length;
+    const seg = 360/n;
+    const gradiente = SEGMENTOS_RULETA.map((s,i)=> `${s.color} ${i*seg}deg ${(i+1)*seg}deg`).join(', ');
+
+    modalContent.innerHTML = `
+      <h2 style="text-align:center;">Gira y gana un cupón</h2>
+      <p style="color:var(--muted);font-size:13px;text-align:center;margin-top:4px;">Una vuelta por visita. ¡Suerte!</p>
+      <div class="ruleta-wrap">
+        <div class="ruleta-puntero">▼</div>
+        <div class="ruleta-wheel" id="ruletaWheel" style="background:conic-gradient(from 0deg, ${gradiente});">
+          ${SEGMENTOS_RULETA.map((s,i)=>{
+            const centro = i*seg + seg/2;
+            return `<span class="ruleta-label" style="transform:rotate(${centro}deg) translateY(-82px) rotate(${-centro}deg);">${s.label}</span>`;
+          }).join('')}
+        </div>
+      </div>
+      <button class="confirm-btn" id="girarBtn" style="margin-top:24px;">Girar la ruleta</button>
+    `;
+    modalOverlay.classList.add('open');
+
+    document.getElementById('girarBtn').addEventListener('click', ()=>{
+      const btn = document.getElementById('girarBtn');
+      btn.disabled = true;
+      btn.textContent = 'Girando…';
+      const idx = elegirSegmentoRuleta();
+      const centro = idx*seg + seg/2;
+      const rotacionFinal = (5*360) + (360 - centro);
+      document.getElementById('ruletaWheel').style.transform = `rotate(${rotacionFinal}deg)`;
+      yaGiroRuleta = true;
+
+      setTimeout(async ()=>{
+        const premio = SEGMENTOS_RULETA[idx];
+        if(!premio.tipo){
+          modalContent.innerHTML = `
+            <div class="success">
+              <h2>¡Casi! 😅</h2>
+              <p style="color:var(--muted);font-size:13.5px;">Esta vez no ha tocado premio. ¡Vuelve a pasarte pronto!</p>
+              <button class="confirm-btn" id="cerrarModal">Cerrar</button>
+            </div>`;
+          document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
+          return;
+        }
+        try{
+          const codigo = 'RULETA' + Math.floor(1000 + Math.random()*9000);
+          await db.collection('cupones').add({codigo, tipo:premio.tipo, valor:premio.valor, usosMax:1, usosActuales:0, activo:true});
+          modalContent.innerHTML = `
+            <div class="success">
+              <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
+              <h2>¡Enhorabuena!</h2>
+              <p style="color:var(--muted);font-size:13.5px;">Has ganado ${premio.label}. Tu código:</p>
+              <div class="transfer-card transfer-total" style="margin-top:10px;"><div class="t-value">${codigo}</div></div>
+              <p style="color:var(--muted);font-size:12px;margin-top:12px;">Úsalo en el checkout.</p>
+              <button class="confirm-btn" id="cerrarModal">Cerrar</button>
+            </div>`;
+        } catch(err){
+          modalContent.innerHTML = `
+            <h2>Vaya…</h2>
+            <p style="color:var(--muted);font-size:13.5px;">No se pudo generar el cupón: ${err.message}</p>
+            <button class="confirm-btn" id="cerrarModal">Cerrar</button>`;
+        }
+        document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
+      }, 4300);
+    });
+  }
+  document.getElementById('abrirRuletaBtn').addEventListener('click', abrirRuleta);
+
+  /* ---------- Newsletter con cupón de bienvenida ---------- */
+  document.getElementById('newsletterForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('newsletterEmail').value.trim();
+    const msg = document.getElementById('newsletterMsg');
+    const form = document.getElementById('newsletterForm');
+    if(!email) return;
+
+    try{
+      const yaExiste = await db.collection('suscriptores').doc(email.toLowerCase()).get();
+      if(yaExiste.exists){
+        msg.textContent = `Ya tienes un cupón con nosotros: usa el código ${yaExiste.data().codigoCupon} en el checkout.`;
+        msg.style.display = 'block';
+        form.style.display = 'none';
+        return;
+      }
+      const codigo = 'BIENVENIDA' + Math.floor(1000 + Math.random()*9000);
+      await db.collection('cupones').add({codigo, tipo:'porcentaje', valor:10, usosMax:1, usosActuales:0, activo:true});
+      await db.collection('suscriptores').doc(email.toLowerCase()).set({
+        email, codigoCupon: codigo, fecha: new Date().toLocaleString('es-ES'),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      msg.innerHTML = `¡Ya está! Tu código es <strong style="color:var(--white);">${codigo}</strong> — úsalo en el checkout para un 10% de descuento.`;
+      msg.style.display = 'block';
+      form.style.display = 'none';
+    } catch(err){
+      msg.textContent = 'No se pudo registrar: ' + err.message;
+      msg.style.display = 'block';
+    }
+  });
+
+
   function renderTabs(){
     tabsEl.innerHTML = categoriasActuales().map(c =>
       `<button class="tab ${c===filtro?'active':''}" data-cat="${c}">${c}</button>`
@@ -1399,12 +1602,15 @@
     return n.toLocaleString('es-ES', {minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2}) + ' €';
   }
 
+  const STOCK_BAJO_CLIENTE = 3;
+
   function renderGrid(){
     const visibles = productos.filter(p => p.visible !== false);
     const lista = filtro==='Todos' ? visibles : visibles.filter(p=>p.cat===filtro);
     grid.innerHTML = lista.map(p => {
       const enOferta = p.enOferta && p.precioOferta != null;
       const sinStock = p.stock != null && p.stock <= 0;
+      const pocasUnidades = p.stock != null && p.stock > 0 && p.stock <= STOCK_BAJO_CLIENTE;
       const esFavorito = misFavoritosIds.includes(p.id);
       const precioHTML = enOferta
         ? `<div class="price-box"><span class="price-old">${formatoPrecio(p.precio)}</span><span class="price price-offer">${formatoPrecio(p.precioOferta)}</span></div>`
@@ -1420,6 +1626,7 @@
           <span class="cat-label">${p.cat}</span>
         </div>
         <div class="card-body">
+          ${pocasUnidades ? `<div class="stock-urgente">Quedan ${p.stock} unidades</div>` : ''}
           <h3 class="card-open" data-open="${p.id}">${p.nombre}</h3>
           <div class="card-foot">
             ${precioHTML}
@@ -1470,6 +1677,7 @@
       </div>
       <h2 style="margin-top:18px;">${p.nombre}</h2>
       <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;">${p.cat}${p.stock!=null ? ' · ' + (sinStock ? 'Sin stock' : p.stock + ' disponibles') : ''}</div>
+      ${(p.stock != null && p.stock > 0 && p.stock <= STOCK_BAJO_CLIENTE) ? `<div class="stock-urgente" style="margin-bottom:14px;">⚠️ Solo quedan ${p.stock} unidades</div>` : ''}
       <div style="margin-bottom:18px;">${precioHTML}</div>
 
       ${grupos.map((g,gi) => `
@@ -2118,7 +2326,7 @@
     const items = ids.map(id=>{
       const p = productoDeClave(id);
       const variante = varianteDeClave(id);
-      return {nombre: variante ? `${p.nombre} (${variante})` : p.nombre, cantidad:carrito[id], precio:precioEfectivo(p)};
+      return {nombre: variante ? `${p.nombre} (${variante})` : p.nombre, cantidad:carrito[id], precio:precioEfectivo(p), productoId: p.id};
     });
     const subtotal = items.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
     let descuento = 0;
@@ -2135,15 +2343,49 @@
     boton.textContent = 'Registrando pedido…';
 
     try{
-      const pedidoRef = await db.collection('pedidos').add({
-        fecha: new Date().toLocaleString('es-ES'),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        nombre, email, direccion,
-        items: itemsConDescuento, total,
-        cupon: cuponAplicado ? cuponAplicado.codigo : null,
-        pagado: false,
-        metodoPago: 'Manual',
-        numeroSeguimiento
+      // Sumamos las cantidades por si el mismo producto aparece varias veces
+      // (por ejemplo, el mismo artículo en dos variantes distintas).
+      const cantidadPorProducto = {};
+      itemsConDescuento.forEach(it=>{
+        cantidadPorProducto[it.productoId] = (cantidadPorProducto[it.productoId]||0) + it.cantidad;
+      });
+
+      const pedidoRef = db.collection('pedidos').doc();
+
+      // Transacción: comprobamos stock y lo descontamos, y creamos el pedido,
+      // todo a la vez — así dos personas no pueden comprar el último artículo al mismo tiempo.
+      await db.runTransaction(async (tx)=>{
+        const refsProductos = Object.keys(cantidadPorProducto).map(id => db.collection('productos').doc(id));
+        const docsProductos = await Promise.all(refsProductos.map(ref => tx.get(ref)));
+
+        for(let i=0; i<docsProductos.length; i++){
+          const doc = docsProductos[i];
+          const idProd = refsProductos[i].id;
+          if(!doc.exists) throw new Error('Un producto de tu bolsa ya no existe. Vuelve a la tienda y revisa tu bolsa.');
+          const datos = doc.data();
+          const pedida = cantidadPorProducto[idProd];
+          if(datos.stock != null && datos.stock < pedida){
+            throw new Error(`"${datos.nombre}" ya no tiene stock suficiente (quedan ${datos.stock}). Ajusta la cantidad en tu bolsa.`);
+          }
+        }
+
+        docsProductos.forEach((doc, i)=>{
+          const datos = doc.data();
+          if(datos.stock != null){
+            tx.update(refsProductos[i], {stock: datos.stock - cantidadPorProducto[refsProductos[i].id]});
+          }
+        });
+
+        tx.set(pedidoRef, {
+          fecha: new Date().toLocaleString('es-ES'),
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          nombre, email, direccion,
+          items: itemsConDescuento, total,
+          cupon: cuponAplicado ? cuponAplicado.codigo : null,
+          pagado: false,
+          metodoPago: 'Manual',
+          numeroSeguimiento
+        });
       });
 
       if(cuponAplicado){
@@ -2805,10 +3047,32 @@
       });
     });
     adminPedidosEl.querySelectorAll('.order-status-select').forEach(sel=>{
-      sel.addEventListener('change', ()=>{
-        db.collection('pedidos').doc(sel.dataset.id).update({estado: sel.value}).catch(err=>{
+      sel.addEventListener('change', async ()=>{
+        const pedido = pedidos.find(p=>p.id===sel.dataset.id);
+        const datosUpdate = {estado: sel.value};
+        try{
+          if(sel.value === 'Cancelado' && pedido && !pedido.stockRestaurado){
+            const cantidadPorProducto = {};
+            (pedido.items||[]).forEach(it=>{
+              if(!it.productoId) return;
+              cantidadPorProducto[it.productoId] = (cantidadPorProducto[it.productoId]||0) + it.cantidad;
+            });
+            await db.runTransaction(async (tx)=>{
+              const refs = Object.keys(cantidadPorProducto).map(id => db.collection('productos').doc(id));
+              const docs = await Promise.all(refs.map(ref => tx.get(ref)));
+              docs.forEach((doc, i)=>{
+                if(doc.exists && doc.data().stock != null){
+                  tx.update(refs[i], {stock: doc.data().stock + cantidadPorProducto[refs[i].id]});
+                }
+              });
+              tx.update(db.collection('pedidos').doc(pedido.id), {...datosUpdate, stockRestaurado: true});
+            });
+          } else {
+            await db.collection('pedidos').doc(sel.dataset.id).update(datosUpdate);
+          }
+        } catch(err){
           alert('No se pudo actualizar el estado: ' + err.message);
-        });
+        }
       });
     });
     adminPedidosEl.querySelectorAll('.order-delete-btn').forEach(btn=>{
