@@ -341,6 +341,7 @@
     color:var(--white);font-family:inherit;font-size:13.5px;
   }
   .newsletter-form input:focus{border-color:var(--accent-portada);outline:none;}
+  .newsletter-form input[readonly]{opacity:0.7;}
   .newsletter-form button{
     background:var(--white);color:var(--bg);border:none;
     padding:11px 16px;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;
@@ -1523,6 +1524,13 @@
   document.getElementById('footerContacto').addEventListener('click', abrirContacto);
 
   /* ---------- Newsletter con cupón de bienvenida ---------- */
+  function ocultarNewsletterEn15s(){
+    setTimeout(()=>{
+      const box = document.getElementById('newsletterBox');
+      if(box) box.style.display = 'none';
+    }, 15000);
+  }
+
   document.getElementById('newsletterForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     const email = document.getElementById('newsletterEmail').value.trim();
@@ -1536,6 +1544,7 @@
         msg.textContent = `Ya tienes un cupón con nosotros: usa el código ${yaExiste.data().codigoCupon} en el checkout.`;
         msg.style.display = 'block';
         form.style.display = 'none';
+        ocultarNewsletterEn15s();
         return;
       }
       const codigo = 'BIENVENIDA' + Math.floor(1000 + Math.random()*9000);
@@ -1547,6 +1556,7 @@
       msg.innerHTML = `¡Ya está! Tu código es <strong style="color:var(--white);">${codigo}</strong> — úsalo en el checkout para un 10% de descuento.`;
       msg.style.display = 'block';
       form.style.display = 'none';
+      ocultarNewsletterEn15s();
     } catch(err){
       msg.textContent = 'No se pudo registrar: ' + err.message;
       msg.style.display = 'block';
@@ -2391,10 +2401,13 @@
   const hamburgerBtn = document.getElementById('openMenu');
 
   auth.onAuthStateChanged(user=>{
+    const inputNews = document.getElementById('newsletterEmail');
     if(user && user.email !== OWNER_EMAIL){
       hamburgerBtn.classList.add('logged-in');
+      if(inputNews){ inputNews.value = user.email; inputNews.readOnly = true; }
     } else if(!user){
       hamburgerBtn.classList.remove('logged-in');
+      if(inputNews){ inputNews.value = ''; inputNews.readOnly = false; }
     }
   });
 
@@ -3440,4 +3453,3 @@ CONTENIDO: ${pedido.items.map(it=>`${it.cantidad}× ${it.nombre}`).join(', ')}`;
 </script>
 </body>
 </html>
- 
