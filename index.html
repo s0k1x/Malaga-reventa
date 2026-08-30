@@ -1034,7 +1034,7 @@
   }
   .intro-bg{
     position:absolute;inset:-14px;
-    background-image:url('IMG_6599.jpeg');
+    background-image:url('6207D72F-9337-4BE6-89CA-A708AA19EBFF.png');
     background-size:cover;
     background-position:center;
     filter:blur(9px);
@@ -1890,12 +1890,16 @@
             </div>
             <button class="report-issue-btn" data-ver-pago="${p.numeroSeguimiento||''}" data-total="${p.total}">Ver instrucciones de pago</button>
           `}
+          <button class="report-issue-btn" data-ver-factura="${p.id}">Ver factura</button>
           <button class="report-issue-btn" data-id="${p.id}">Reportar un problema</button>
         </div>
       `).join('');
       bindMenuNav();
       menuItems.querySelectorAll('.report-issue-btn[data-id]').forEach(btn=>{
         btn.addEventListener('click', ()=> abrirReportarProblema(btn.dataset.id, misPedidos.find(p=>p.id===btn.dataset.id)));
+      });
+      menuItems.querySelectorAll('[data-ver-factura]').forEach(btn=>{
+        btn.addEventListener('click', ()=> abrirFacturaPedido(misPedidos.find(p=>p.id===btn.dataset.verFactura), true));
       });
       menuItems.querySelectorAll('[data-ver-pago]').forEach(btn=>{
         btn.addEventListener('click', ()=> mostrarDatosTransferencia(btn.dataset.verPago, parseFloat(btn.dataset.total)));
@@ -2984,8 +2988,7 @@
 
   let busquedaPedidos = '';
 
-  function abrirFacturaPedido(id){
-    const pedido = pedidos.find(p=>p.id===id);
+  function abrirFacturaPedido(pedido, esCliente){
     if(!pedido) return;
 
     const numRef = pedido.numeroSeguimiento || ('#' + pedido.id.slice(0,6));
@@ -3056,12 +3059,14 @@ CONTENIDO: ${pedido.items.map(it=>`${it.cantidad}× ${it.nombre}`).join(', ')}`;
 
       <button class="confirm-btn no-print" id="imprimirFacturaBtn" style="margin-top:22px;">🖨️ Imprimir / Guardar como PDF</button>
 
+      ${esCliente ? '' : `
       <div class="pay-divider no-print">Plantilla de envío (rellenada automáticamente)</div>
       <textarea id="plantillaEnvioTexto" class="plantilla-envio-box no-print" readonly>${plantillaEnvio}</textarea>
       <div class="factura-btn-row no-print">
         <button class="confirm-btn" id="copiarEnvioBtn" style="background:transparent;color:var(--muted);border:1px solid var(--line);">Copiar</button>
         <button class="confirm-btn" id="descargarEnvioBtn" style="background:transparent;color:var(--muted);border:1px solid var(--line);">Descargar .txt</button>
       </div>
+      `}
 
       <button class="confirm-btn no-print" id="cerrarModal" style="margin-top:14px;">Cerrar</button>
     `;
@@ -3069,23 +3074,25 @@ CONTENIDO: ${pedido.items.map(it=>`${it.cantidad}× ${it.nombre}`).join(', ')}`;
 
     document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
     document.getElementById('imprimirFacturaBtn').addEventListener('click', ()=> window.print());
-    document.getElementById('copiarEnvioBtn').addEventListener('click', ()=>{
-      const texto = document.getElementById('plantillaEnvioTexto').value;
-      navigator.clipboard.writeText(texto).then(()=>{
-        const btn = document.getElementById('copiarEnvioBtn');
-        btn.textContent = 'Copiado ✓';
-        setTimeout(()=> btn.textContent = 'Copiar', 1500);
-      }).catch(()=> alert('No se pudo copiar. Selecciona el texto a mano.'));
-    });
-    document.getElementById('descargarEnvioBtn').addEventListener('click', ()=>{
-      const texto = document.getElementById('plantillaEnvioTexto').value;
-      const blob = new Blob([texto], {type:'text/plain'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `envio-${numRef}.txt`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    });
+    if(!esCliente){
+      document.getElementById('copiarEnvioBtn').addEventListener('click', ()=>{
+        const texto = document.getElementById('plantillaEnvioTexto').value;
+        navigator.clipboard.writeText(texto).then(()=>{
+          const btn = document.getElementById('copiarEnvioBtn');
+          btn.textContent = 'Copiado ✓';
+          setTimeout(()=> btn.textContent = 'Copiar', 1500);
+        }).catch(()=> alert('No se pudo copiar. Selecciona el texto a mano.'));
+      });
+      document.getElementById('descargarEnvioBtn').addEventListener('click', ()=>{
+        const texto = document.getElementById('plantillaEnvioTexto').value;
+        const blob = new Blob([texto], {type:'text/plain'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `envio-${numRef}.txt`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+    }
   }
 
   function renderAdminPedidos(){
@@ -3140,7 +3147,7 @@ CONTENIDO: ${pedido.items.map(it=>`${it.cantidad}× ${it.nombre}`).join(', ')}`;
       });
     });
     adminPedidosEl.querySelectorAll('.ver-factura-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=> abrirFacturaPedido(btn.dataset.id));
+      btn.addEventListener('click', ()=> abrirFacturaPedido(pedidos.find(p=>p.id===btn.dataset.id)));
     });
     document.getElementById('pedidosBuscar').addEventListener('input', (e)=>{
       busquedaPedidos = e.target.value;
