@@ -1,1 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Gracias — Reventa.Malaga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,wght@1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0B0C;
+    --bg-2:#1A1A1D;
+    --line:#333336;
+    --white:#F5F4F1;
+    --muted:#9A9A97;
+    --accent:#3D6BD6;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);}
+  body{
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Inter',sans-serif;
+    color:var(--white);
+    padding:32px;
+    position:relative;
+    overflow:hidden;
+  }
+  body::before{
+    content:"";
+    position:absolute;inset:0;
+    background:radial-gradient(ellipse 60% 45% at 50% 0%, rgba(61,107,214,0.16), transparent 60%);
+    pointer-events:none;
+  }
+  .caja{
+    position:relative;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+  }
+  .marca{
+    font-family:'Anton',sans-serif;
+    font-size:15px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    margin-bottom:56px;
+  }
+  .marca .punto{color:var(--accent);}
+  .marco-check{
+    width:64px;height:64px;
+    margin:0 auto 32px;
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .marco-check svg{width:26px;height:26px;color:var(--accent);}
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+    display:block;
+    margin-bottom:18px;
+  }
+  h1{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    text-transform:uppercase;
+    font-size:clamp(40px,11vw,64px);
+    line-height:0.98;
+    margin:0 0 20px;
+    letter-spacing:0.5px;
+  }
+  p{
+    font-size:15px;
+    line-height:1.65;
+    color:var(--muted);
+    margin:0 auto;
+    max-width:320px;
+  }
+  .linea{
+    width:40px;height:1px;
+    background:var(--line);
+    margin:36px auto;
+  }
+  a.volver{
+    display:inline-block;
+    margin-top:8px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--white);
+    text-decoration:none;
+    border-bottom:1px solid var(--accent);
+    padding-bottom:2px;
+  }
+  a.volver:hover{color:var(--accent);}
+</style>
+</head>
+<body>
+
+  <div class="caja">
+    <div class="marca">REVENTA<span class="punto">.</span>MALAGA</div>
+
+    <div class="marco-check">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+
+    <span class="eyebrow">Confirmado</span>
+    <h1>Gracias</h1>
+    <p>Hemos recibido tu pedido correctamente. En cuanto lo revisemos, te pondremos al día.</p>
+
+    <div class="linea"></div>
+
+    <a class="volver" href="index.html">Volver a la tienda</a>
+  </div>
+
+</body>
+</html>
 
