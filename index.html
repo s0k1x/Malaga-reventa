@@ -55,14 +55,17 @@
   const CLOUDINARY_CLOUD_NAME = 'impjfhjy';
   const CLOUDINARY_UPLOAD_PRESET = 'malaga-productos';
 
-  // TODO (opcional): rellena esto para que se envíe un email de confirmación real al cliente.
-  // Si lo dejas como está (con 'TU_'), el pedido se guarda igual pero no se envía email.
-  // Crea una cuenta gratis en https://www.emailjs.com, conecta tu Gmail/Outlook como "Service",
-  // crea una "Email Template" con las variables {{nombre}}, {{email}}, {{total}}, {{items}}, {{fecha}}
-  // y copia aquí el Service ID, el Template ID y tu Public Key (Account → General).
-  const EMAILJS_SERVICE_ID = 'TU_SERVICE_ID';
-  const EMAILJS_TEMPLATE_ID = 'TU_TEMPLATE_ID';
-  const EMAILJS_PUBLIC_KEY = 'TU_PUBLIC_KEY';
+  // TODO: rellena esto para activar las notificaciones por email (a ti y al cliente).
+  // Si lo dejas como está (con 'TU_'), todo sigue funcionando igual, solo que sin avisos.
+  // Crea una cuenta gratis en https://www.emailjs.com, conecta tu Gmail como "Service",
+  // y crea DOS "Email Template":
+  //  1) Una para AVISARTE A TI de pedidos nuevos, con variables {{numero}} {{nombre}} {{email}} {{total}} {{items}} {{direccion}}
+  //  2) Otra para AVISAR AL CLIENTE de cambios en su pedido, con variables {{nombre}} {{numero}} {{mensaje}}
+  // Copia aquí el Service ID, los dos Template ID, y tu Public Key (Account → General).
+  const EMAILJS_SERVICE_ID = 'service_ysywlda';
+  const EMAILJS_TEMPLATE_PEDIDO = 'template_0v2lbmm';
+  const EMAILJS_TEMPLATE_CLIENTE = 'template_tshhuo7';
+  const EMAILJS_PUBLIC_KEY = 'jwKV5hD49sV8gEVaz';
   if(EMAILJS_PUBLIC_KEY && EMAILJS_PUBLIC_KEY.indexOf('TU_') !== 0 && window.emailjs){
     emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
   }
@@ -2343,18 +2346,32 @@
     document.getElementById('confirmarPago').addEventListener('click', pagarManual);
   }
 
-  function enviarEmailConfirmacion(pedido){
+  function notificarNuevoPedido(pedido){
     if(!window.emailjs || EMAILJS_PUBLIC_KEY.indexOf('TU_') === 0) return; // no configurado: se omite en silencio
-    const itemsTexto = pedido.items.map(it => `${it.cantidad}× ${it.nombre} — ${formatoPrecio(it.precio*it.cantidad)}`).join('\n');
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    const itemsTexto = pedido.items.map(it => `${it.cantidad}× ${it.nombre}`).join(', ');
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_PEDIDO, {
+      to_email: OWNER_EMAIL,
+      numero: pedido.numeroSeguimiento,
       nombre: pedido.nombre,
       email: pedido.email,
       total: formatoPrecio(pedido.total),
       items: itemsTexto,
-      fecha: pedido.fecha,
       direccion: pedido.direccion
     }).catch(err=>{
-      console.error('No se pudo enviar el email de confirmación:', err);
+      console.error('No se pudo avisar del nuevo pedido:', err);
+    });
+  }
+
+  function notificarCliente(pedido, mensaje){
+    if(!window.emailjs || EMAILJS_PUBLIC_KEY.indexOf('TU_') === 0) return; // no configurado: se omite en silencio
+    if(!pedido || !pedido.email) return;
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CLIENTE, {
+      to_email: pedido.email,
+      nombre: pedido.nombre || '',
+      numero: pedido.numeroSeguimiento || '',
+      mensaje
+    }).catch(err=>{
+      console.error('No se pudo avisar al cliente:', err);
     });
   }
 
@@ -2470,6 +2487,8 @@
       if(cuponAplicado){
         db.collection('cupones').doc(cuponAplicado.id).update({usosActuales: firebase.firestore.FieldValue.increment(1)}).catch(()=>{});
       }
+
+      notificarNuevoPedido({nombre, email, direccion, items: itemsConDescuento, total, numeroSeguimiento});
 
       carrito = {};
       actualizarCarrito();
@@ -3280,7 +3299,12 @@
 
     adminPedidosEl.querySelectorAll('.pago-check').forEach(chk=>{
       chk.addEventListener('change', ()=>{
-        db.collection('pedidos').doc(chk.dataset.id).update({pagado: chk.checked}).catch(err=>{
+        db.collection('pedidos').doc(chk.dataset.id).update({pagado: chk.checked}).then(()=>{
+          if(chk.checked){
+            const pedido = pedidos.find(p=>p.id===chk.dataset.id);
+            notificarCliente(pedido, 'Hemos confirmado tu pago. Tu pedido se pondrá en marcha.');
+          }
+        }).catch(err=>{
           alert('No se pudo actualizar: ' + err.message);
         });
       });
@@ -3311,6 +3335,7 @@
           } else {
             await db.collection('pedidos').doc(sel.dataset.id).update(datosUpdate);
           }
+          notificarCliente(pedido, `El estado de tu pedido ha cambiado a: ${sel.value}.`);
         } catch(err){
           alert('No se pudo actualizar el estado: ' + err.message);
         }
