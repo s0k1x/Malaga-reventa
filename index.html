@@ -702,6 +702,26 @@
   .legal-doc .placeholder{color:var(--accent-portada);font-weight:600;}
   .legal-doc ul{margin:0 0 10px;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.65;}
   .modal-legal{max-width:520px;}
+  .detalle-media{
+    position:relative;
+    aspect-ratio:4/3;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    margin:0 -30px;width:calc(100% + 60px);
+  }
+  .detalle-media img, .detalle-media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .detalle-media .icon-watermark{width:30%;height:30%;color:rgba(255,255,255,0.14);}
+  .detalle-media .fav-heart{top:14px;right:14px;}
+  .variant-group{margin-top:16px;}
+  .variant-group-label{
+    font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);
+    font-weight:600;margin-bottom:8px;
+  }
+  .variant-options{display:flex;flex-wrap:wrap;gap:8px;}
+  .variant-opt{
+    background:transparent;border:1px solid var(--line);color:var(--muted);
+    padding:8px 16px;font-size:13px;font-weight:600;
+  }
+  .variant-opt.active{background:var(--white);color:var(--bg);border-color:var(--white);}
 
   /* ---------- Panel del propietario ---------- */
   #adminScreen{
@@ -1141,6 +1161,11 @@
   function tintDe(cat){ return CAT_TINT[cat] || DEFAULT_TINT; }
   function iconoDe(cat){ return ICONS[cat] || DEFAULT_ICON; }
   function precioEfectivo(p){ return (p.enOferta && p.precioOferta != null) ? p.precioOferta : p.precio; }
+  // Las claves del carrito pueden ser "idProducto" o "idProducto::Color: Rojo, Talla: M"
+  // cuando el producto tiene variantes elegidas. Esta función saca el producto real.
+  function idBaseDeClave(clave){ return clave.split('::')[0]; }
+  function varianteDeClave(clave){ const partes = clave.split('::'); return partes.length>1 ? partes[1] : ''; }
+  function productoDeClave(clave){ return productos.find(x=>x.id===idBaseDeClave(clave)); }
   function mediaHTML(p){
     if(p.mediaTipo === 'video' && p.mediaURL){
       return `<video src="${p.mediaURL}" muted loop autoplay playsinline></video><span class="video-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>`;
@@ -1386,7 +1411,7 @@
         : `<span class="price">${formatoPrecio(p.precio)}</span>`;
       return `
       <div class="card">
-        <div class="card-visual" style="background:${tintDe(p.cat)};">
+        <div class="card-visual card-open" data-open="${p.id}" style="background:${tintDe(p.cat)};">
           ${mediaHTML(p)}
           <button class="fav-heart ${esFavorito ? 'active':''}" data-fav="${p.id}" aria-label="Favorito">${esFavorito ? '❤️' : '🤍'}</button>
           ${enOferta ? '<span class="offer-ribbon">Oferta</span>' : ''}
@@ -1395,7 +1420,7 @@
           <span class="cat-label">${p.cat}</span>
         </div>
         <div class="card-body">
-          <h3>${p.nombre}</h3>
+          <h3 class="card-open" data-open="${p.id}">${p.nombre}</h3>
           <div class="card-foot">
             ${precioHTML}
             <button class="add-btn" data-id="${p.id}" ${sinStock ? 'disabled' : ''}>${sinStock ? 'Agotado' : 'Añadir'}</button>
@@ -1405,7 +1430,8 @@
     `;
     }).join('');
     grid.querySelectorAll('.add-btn:not([disabled])').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
         const id = btn.dataset.id;
         carrito[id] = (carrito[id]||0) + 1;
         actualizarCarrito();
@@ -1414,7 +1440,78 @@
       });
     });
     grid.querySelectorAll('.fav-heart').forEach(btn=>{
-      btn.addEventListener('click', ()=> toggleFavorito(btn.dataset.fav));
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        toggleFavorito(btn.dataset.fav);
+      });
+    });
+    grid.querySelectorAll('.card-open').forEach(el=>{
+      el.addEventListener('click', ()=> abrirDetalleProducto(el.dataset.open));
+    });
+  }
+
+  function abrirDetalleProducto(id){
+    const p = productos.find(x=>x.id===id);
+    if(!p) return;
+    const enOferta = p.enOferta && p.precioOferta != null;
+    const sinStock = p.stock != null && p.stock <= 0;
+    const esFavorito = misFavoritosIds.includes(p.id);
+    const precioHTML = enOferta
+      ? `<div class="price-box"><span class="price-old">${formatoPrecio(p.precio)}</span><span class="price price-offer">${formatoPrecio(p.precioOferta)}</span></div>`
+      : `<span class="price">${formatoPrecio(p.precio)}</span>`;
+    const grupos = p.variantes || [];
+
+    modalContent.classList.add('modal-legal');
+    modalContent.innerHTML = `
+      <div class="detalle-media" style="background:${tintDe(p.cat)};">
+        ${mediaHTML(p)}
+        <button class="fav-heart ${esFavorito ? 'active':''}" data-fav="${p.id}" aria-label="Favorito">${esFavorito ? '❤️' : '🤍'}</button>
+        ${enOferta ? '<span class="offer-ribbon">Oferta</span>' : ''}
+      </div>
+      <h2 style="margin-top:18px;">${p.nombre}</h2>
+      <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;">${p.cat}${p.stock!=null ? ' · ' + (sinStock ? 'Sin stock' : p.stock + ' disponibles') : ''}</div>
+      <div style="margin-bottom:18px;">${precioHTML}</div>
+
+      ${grupos.map((g,gi) => `
+        <div class="variant-group">
+          <div class="variant-group-label">${g.nombre}</div>
+          <div class="variant-options">
+            ${g.opciones.map((op,oi) => `<button type="button" class="variant-opt ${oi===0?'active':''}" data-grupo="${gi}" data-valor="${op}">${op}</button>`).join('')}
+          </div>
+        </div>
+      `).join('')}
+
+      <button class="confirm-btn" id="detalleAddBtn" style="margin-top:22px;" ${sinStock ? 'disabled' : ''}>${sinStock ? 'Agotado' : 'Añadir a la bolsa'}</button>
+    `;
+    modalOverlay.classList.add('open');
+
+    const seleccion = {};
+    grupos.forEach((g,gi)=>{ seleccion[gi] = g.opciones[0]; });
+
+    modalContent.querySelectorAll('.variant-opt').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const gi = btn.dataset.grupo;
+        seleccion[gi] = btn.dataset.valor;
+        modalContent.querySelectorAll(`.variant-opt[data-grupo="${gi}"]`).forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+    const favBtn = modalContent.querySelector('.fav-heart');
+    if(favBtn) favBtn.addEventListener('click', ()=>{
+      toggleFavorito(p.id);
+      setTimeout(()=> abrirDetalleProducto(id), 200);
+    });
+    const addBtn = document.getElementById('detalleAddBtn');
+    if(addBtn) addBtn.addEventListener('click', ()=>{
+      const varianteTexto = grupos.map((g,gi)=> `${g.nombre}: ${seleccion[gi]}`).join(', ');
+      const clave = varianteTexto ? `${p.id}::${varianteTexto}` : p.id;
+      carrito[clave] = (carrito[clave]||0) + 1;
+      actualizarCarrito();
+      addBtn.textContent = 'Añadido ✓';
+      setTimeout(()=>{
+        modalOverlay.classList.remove('open');
+        modalContent.classList.remove('modal-legal');
+      }, 500);
     });
   }
 
@@ -1435,7 +1532,8 @@
     checkoutBtn.disabled = false;
     let subtotal = 0;
     drawerItems.innerHTML = ids.map(id=>{
-      const p = productos.find(x=>x.id===id);
+      const p = productoDeClave(id);
+      const variante = varianteDeClave(id);
       const cant = carrito[id];
       const precio = precioEfectivo(p);
       subtotal += precio * cant;
@@ -1444,6 +1542,7 @@
           <div class="item-visual" style="background:${tintDe(p.cat)};">${p.mediaURL ? `<img src="${p.mediaURL}" style="width:100%;height:100%;object-fit:cover;">` : iconoDe(p.cat)}</div>
           <div class="item-info">
             <h4>${p.nombre}</h4>
+            ${variante ? `<div style="font-size:11px;color:var(--muted);margin-top:-2px;margin-bottom:4px;">${variante}</div>` : ''}
             <div class="qty-row">
               <button data-id="${id}" data-action="menos" aria-label="Restar">−</button>
               <span class="mono">${cant}</span>
@@ -1842,7 +1941,7 @@
     cuponAplicado = null;
     const ids = Object.keys(carrito).filter(id=>carrito[id]>0);
     const subtotal = ids.reduce((sum,id)=>{
-      const p = productos.find(x=>x.id===id);
+      const p = productoDeClave(id);
       return sum + precioEfectivo(p) * carrito[id];
     },0);
     modalContent.innerHTML = `
@@ -2017,8 +2116,9 @@
 
     const ids = Object.keys(carrito).filter(id=>carrito[id]>0);
     const items = ids.map(id=>{
-      const p = productos.find(x=>x.id===id);
-      return {nombre:p.nombre, cantidad:carrito[id], precio:precioEfectivo(p)};
+      const p = productoDeClave(id);
+      const variante = varianteDeClave(id);
+      return {nombre: variante ? `${p.nombre} (${variante})` : p.nombre, cantidad:carrito[id], precio:precioEfectivo(p)};
     });
     const subtotal = items.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
     let descuento = 0;
@@ -2062,7 +2162,10 @@
   }
 
   modalOverlay.addEventListener('click', (e)=>{
-    if(e.target===modalOverlay) modalOverlay.classList.remove('open');
+    if(e.target===modalOverlay){
+      modalOverlay.classList.remove('open');
+      modalContent.classList.remove('modal-legal');
+    }
   });
 
   /* ---------- Inicio de sesión de clientes (Firebase Auth real) ---------- */
@@ -2376,6 +2479,22 @@
         </div>
 
         <div class="field">
+          <label>Opciones del producto (opcional — ej. Color, Talla)</label>
+          <div id="npVariantesLista"></div>
+          <div class="field-row" style="margin-top:10px;">
+            <div class="field">
+              <label for="npVarianteNombre">Nombre de la opción</label>
+              <input id="npVarianteNombre" type="text" placeholder="Ej. Color">
+            </div>
+            <div class="field">
+              <label for="npVarianteValores">Valores, separados por comas</label>
+              <input id="npVarianteValores" type="text" placeholder="Rojo, Azul, Verde">
+            </div>
+          </div>
+          <button type="button" class="add-btn" id="npAnadirVarianteBtn" style="width:100%;margin-top:10px;background:transparent;color:var(--muted);border:1px solid var(--line);">+ Añadir esta opción</button>
+        </div>
+
+        <div class="field">
           <label for="npMedia">Fotos o vídeos del producto (puedes elegir varios)</label>
           <input id="npMedia" type="file" accept="image/*,video/*" multiple>
           <div id="npMediaPreview" class="media-gallery">
@@ -2400,6 +2519,41 @@
 
     let mediasExistentes = [...galeriaEditando]; // se irá recortando si el usuario quita alguna
     let archivosNuevos = [];
+    let variantesActuales = editando && editando.variantes ? JSON.parse(JSON.stringify(editando.variantes)) : [];
+
+    function pintarVariantes(){
+      const cont = document.getElementById('npVariantesLista');
+      if(variantesActuales.length===0){
+        cont.innerHTML = `<p style="font-size:12px;color:var(--muted);margin:0;">Todavía no has añadido ninguna opción.</p>`;
+        return;
+      }
+      cont.innerHTML = variantesActuales.map((g,gi) => `
+        <div class="variant-admin-row">
+          <div><strong>${g.nombre}:</strong> ${g.opciones.join(', ')}</div>
+          <button type="button" class="p-delete" data-quitar-variante="${gi}" aria-label="Quitar">✕</button>
+        </div>
+      `).join('');
+      cont.querySelectorAll('[data-quitar-variante]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          variantesActuales.splice(Number(btn.dataset.quitarVariante), 1);
+          pintarVariantes();
+        });
+      });
+    }
+    pintarVariantes();
+
+    document.getElementById('npAnadirVarianteBtn').addEventListener('click', ()=>{
+      const nombreGrupo = document.getElementById('npVarianteNombre').value.trim();
+      const valores = document.getElementById('npVarianteValores').value.split(',').map(v=>v.trim()).filter(Boolean);
+      if(!nombreGrupo || valores.length===0){
+        alert('Escribe un nombre de opción (ej. Color) y al menos un valor.');
+        return;
+      }
+      variantesActuales.push({nombre: nombreGrupo, opciones: valores});
+      document.getElementById('npVarianteNombre').value = '';
+      document.getElementById('npVarianteValores').value = '';
+      pintarVariantes();
+    });
 
     function repintarGaleria(){
       const preview = document.getElementById('npMediaPreview');
@@ -2467,7 +2621,7 @@
         return;
       }
 
-      const datos = {nombre, cat, precio, stock, visible, enOferta, precioOferta: enOferta ? precioOferta : null};
+      const datos = {nombre, cat, precio, stock, visible, enOferta, precioOferta: enOferta ? precioOferta : null, variantes: variantesActuales};
 
       const guardarBtn = document.getElementById('npGuardarBtn');
       guardarBtn.disabled = true;
