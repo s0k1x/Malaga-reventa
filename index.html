@@ -359,6 +359,30 @@
     white-space:nowrap;
   }
   .newsletter-msg{font-size:12.5px;font-weight:600;color:var(--accent-portada);}
+  .search-box{
+    position:relative;
+    max-width:520px;margin:20px auto 0;padding:0 20px;
+  }
+  .search-box input{
+    width:100%;padding:12px 40px 12px 40px;
+    background:var(--bg-2);border:1px solid var(--line);
+    color:var(--white);font-family:inherit;font-size:14px;
+  }
+  .search-box input::placeholder{color:var(--muted);}
+  .search-box input:focus{outline:none;border-color:var(--accent-portada);}
+  .search-box input::-webkit-search-cancel-button{display:none;}
+  .search-icon{
+    position:absolute;left:34px;top:50%;transform:translateY(-50%);
+    width:16px;height:16px;color:var(--muted);pointer-events:none;
+  }
+  #buscadorClear{
+    position:absolute;right:32px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--muted);font-size:14px;padding:4px;
+  }
+  .grid-empty{
+    grid-column:1/-1;text-align:center;padding:60px 20px;
+    color:var(--muted);font-size:13.5px;
+  }
   .tabs{
     display:flex;flex-wrap:nowrap;gap:26px;
     justify-content:flex-start;
@@ -1169,6 +1193,12 @@
   <div id="newsletterMsg" class="newsletter-msg" style="display:none;"></div>
 </section>
 
+<div class="search-box">
+  <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+  <input type="search" id="buscadorInput" placeholder="Buscar productos…" autocomplete="off">
+  <button type="button" id="buscadorClear" aria-label="Borrar búsqueda" style="display:none;">✕</button>
+</div>
+
 <nav class="tabs" id="tabs"></nav>
 
 <section class="grid" id="grid"></section>
@@ -1355,6 +1385,7 @@
     return ['Todos', ...new Set(productos.map(p => p.cat))];
   }
   let filtro = 'Todos';
+  let busquedaTienda = '';
   let carrito = {};
 
   const grid = document.getElementById('grid');
@@ -1597,7 +1628,15 @@
 
   function renderGrid(){
     const visibles = productos.filter(p => p.visible !== false);
-    const lista = filtro==='Todos' ? visibles : visibles.filter(p=>p.cat===filtro);
+    let lista = filtro==='Todos' ? visibles : visibles.filter(p=>p.cat===filtro);
+    if(busquedaTienda.trim()){
+      const q = busquedaTienda.trim().toLowerCase();
+      lista = lista.filter(p => p.nombre.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q));
+    }
+    if(lista.length===0){
+      grid.innerHTML = `<div class="grid-empty">No hay productos que coincidan con "${busquedaTienda}".</div>`;
+      return;
+    }
     grid.innerHTML = lista.map(p => {
       const enOferta = p.enOferta && p.precioOferta != null;
       const sinStock = p.stock != null && p.stock <= 0;
@@ -2518,6 +2557,18 @@
   renderTabs();
   renderGrid();
   actualizarCarrito();
+
+  document.getElementById('buscadorInput').addEventListener('input', (e)=>{
+    busquedaTienda = e.target.value;
+    document.getElementById('buscadorClear').style.display = busquedaTienda ? 'block' : 'none';
+    renderGrid();
+  });
+  document.getElementById('buscadorClear').addEventListener('click', ()=>{
+    busquedaTienda = '';
+    document.getElementById('buscadorInput').value = '';
+    document.getElementById('buscadorClear').style.display = 'none';
+    renderGrid();
+  });
 
   /* ---------- Sincronización en tiempo real con Firestore ---------- */
   db.collection('productos').onSnapshot(snapshot=>{
