@@ -591,7 +591,7 @@
   .modal-overlay{
     position:fixed;inset:0;background:rgba(0,0,0,0.7);
     display:none;align-items:center;justify-content:center;
-    z-index:50;padding:20px;
+    z-index:90;padding:20px;
   }
   .modal-overlay.open{display:flex;}
   .modal{
@@ -2402,9 +2402,17 @@
 
   auth.onAuthStateChanged(user=>{
     const inputNews = document.getElementById('newsletterEmail');
+    const newsBox = document.getElementById('newsletterBox');
     if(user && user.email !== OWNER_EMAIL){
       hamburgerBtn.classList.add('logged-in');
       if(inputNews){ inputNews.value = user.email; inputNews.readOnly = true; }
+      // Si ya se suscribió antes con este correo, no hace falta ofrecérselo otra vez:
+      // su cupón ya está disponible en el menú ☰ → Mis cupones.
+      if(newsBox){
+        db.collection('suscriptores').doc(user.email.toLowerCase()).get().then(doc=>{
+          if(doc.exists) newsBox.style.display = 'none';
+        }).catch(()=>{});
+      }
     } else if(!user){
       hamburgerBtn.classList.remove('logged-in');
       if(inputNews){ inputNews.value = ''; inputNews.readOnly = false; }
