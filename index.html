@@ -1982,22 +1982,14 @@
   function mostrarDatosTransferencia(numeroSeguimiento, total){
     modalContent.innerHTML = `
       <h2>Datos para pagar tu pedido</h2>
-      <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:6px;">Paga por Bizum o por transferencia. En cuanto lo recibamos, revisaremos el pago y tu pedido se pondrá en marcha.</p>
+      <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:6px;">Paga por Bizum. En cuanto lo recibamos, revisaremos el pago y tu pedido se pondrá en marcha.</p>
 
       <div class="transfer-card"><div class="t-label">Número de seguimiento de tu pedido</div><div class="t-value">${numeroSeguimiento}</div></div>
       <div class="transfer-card transfer-total"><div class="t-label">Importe a pagar</div><div class="t-value">${formatoPrecio(total)}</div></div>
 
-      ${configTienda.bizumTelefono ? `
-        <div class="pay-divider">Opción 1 — Bizum</div>
-        <div class="transfer-card"><div class="t-label">Número de Bizum</div><div class="t-value">${configTienda.bizumTelefono}</div></div>
-        <div class="pay-note">Al enviar el Bizum, pon <strong style="color:var(--white);">${numeroSeguimiento}</strong> en el concepto/mensaje si tu banco lo permite.</div>
-      ` : ''}
-
-      <div class="pay-divider">Opción 2 — Transferencia bancaria</div>
-      ${configTienda.titularCuenta ? `<div class="transfer-card"><div class="t-label">Titular</div><div class="t-value">${configTienda.titularCuenta}</div></div>` : ''}
-      ${configTienda.iban ? `<div class="transfer-card"><div class="t-label">IBAN</div><div class="t-value">${configTienda.iban}</div></div>` : ''}
-      ${configTienda.banco ? `<div class="transfer-card"><div class="t-label">Banco</div><div class="t-value">${configTienda.banco}</div></div>` : ''}
-      <div class="transfer-card"><div class="t-label">Concepto (muy importante ponerlo)</div><div class="t-value">${numeroSeguimiento}</div></div>
+      <div class="pay-divider">Bizum</div>
+      <div class="transfer-card"><div class="t-label">Número de Bizum</div><div class="t-value">${configTienda.bizumTelefono || '(sin configurar todavía)'}</div></div>
+      <div class="pay-note">Al enviar el Bizum, pon <strong style="color:var(--white);">${numeroSeguimiento}</strong> en el concepto/mensaje si tu banco lo permite.</div>
 
       <div class="pay-note">Una vez hecho el pago, revisaremos y tu pedido se pondrá en marcha${configTienda.tiempoRespuesta ? ' (normalmente en ' + configTienda.tiempoRespuesta + ')' : ''}. Guarda tu número de seguimiento — lo necesitas para ver el estado de tu pedido en el menú ☰ → Mis pedidos. ${configTienda.contactoEmail ? 'Si tienes dudas, escríbenos a ' + configTienda.contactoEmail + '.' : ''}</div>
 
@@ -2185,7 +2177,7 @@
     console.error('Error leyendo pedidos de Firestore:', err);
   });
 
-  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: '', whatsapp: '', tiempoRespuesta: '24–48 horas laborables', titularCuenta: 'Málaga Reventa', iban: 'ES00 0000 0000 0000 0000 0000', banco: '', bizumTelefono: '637327675'};
+  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: '', whatsapp: '', tiempoRespuesta: '24–48 horas laborables', bizumTelefono: '637327675'};
   db.collection('config').doc('general').onSnapshot(doc=>{
     if(doc.exists){
       configTienda = {...configTienda, ...doc.data()};
@@ -2802,19 +2794,7 @@
           <input id="cfgTiempoResp" type="text" value="${(configTienda.tiempoRespuesta||'').replace(/"/g,'&quot;')}" placeholder="24–48 horas laborables">
         </div>
 
-        <div class="pay-divider">Datos bancarios (para el pago por transferencia)</div>
-        <div class="field">
-          <label for="cfgTitular">Titular de la cuenta</label>
-          <input id="cfgTitular" type="text" value="${(configTienda.titularCuenta||'').replace(/"/g,'&quot;')}" placeholder="Tu nombre o el de tu negocio">
-        </div>
-        <div class="field">
-          <label for="cfgIban">IBAN</label>
-          <input id="cfgIban" type="text" value="${(configTienda.iban||'').replace(/"/g,'&quot;')}" placeholder="ES00 0000 0000 0000 0000 0000">
-        </div>
-        <div class="field">
-          <label for="cfgBanco">Banco (opcional)</label>
-          <input id="cfgBanco" type="text" value="${(configTienda.banco||'').replace(/"/g,'&quot;')}" placeholder="Ej. CaixaBank">
-        </div>
+        <div class="pay-divider">Bizum</div>
         <div class="field">
           <label for="cfgBizum">Número de Bizum</label>
           <input id="cfgBizum" type="text" value="${(configTienda.bizumTelefono||'').replace(/"/g,'&quot;')}" placeholder="600 000 000">
@@ -2829,11 +2809,8 @@
       const contactoEmail = document.getElementById('cfgContacto').value.trim();
       const whatsapp = document.getElementById('cfgWhatsapp').value.trim();
       const tiempoRespuesta = document.getElementById('cfgTiempoResp').value.trim();
-      const titularCuenta = document.getElementById('cfgTitular').value.trim();
-      const iban = document.getElementById('cfgIban').value.trim();
-      const banco = document.getElementById('cfgBanco').value.trim();
       const bizumTelefono = document.getElementById('cfgBizum').value.trim();
-      db.collection('config').doc('general').set({envioTexto, contactoEmail, whatsapp, tiempoRespuesta, titularCuenta, iban, banco, bizumTelefono}, {merge:true}).then(()=>{
+      db.collection('config').doc('general').set({envioTexto, contactoEmail, whatsapp, tiempoRespuesta, bizumTelefono}, {merge:true}).then(()=>{
         const msg = document.getElementById('cfgGuardadoMsg');
         msg.style.display = 'block';
         setTimeout(()=> msg.style.display='none', 2000);
