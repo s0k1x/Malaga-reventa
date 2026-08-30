@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Reventa.Malaga — Edición limitada</title>
-<link rel="icon" type="image/png" href="DB636764-D086-48CC-9855-FFA0F043BE60.png">
-<link rel="apple-touch-icon" href="DB636764-D086-48CC-9855-FFA0F043BE60.png">
+<link rel="icon" type="image/png" href="766112B0-5E69-4F99-99CF-0B6470C35164.png">
+<link rel="apple-touch-icon" href="766112B0-5E69-4F99-99CF-0B6470C35164.png">
 <!--
   NOTA PARA EL DESARROLLADOR:
   PAGO: se gestiona por Bizum de forma manual. El cliente confirma el pedido, se genera
@@ -970,11 +970,28 @@
   }
   .factura-btn-row{display:flex;gap:10px;margin-top:10px;}
   .factura-btn-row .confirm-btn{margin-top:0;}
+  .etiqueta-label{
+    border:2px dashed var(--line);padding:22px;margin-top:12px;
+  }
+  .etiqueta-seccion{margin-bottom:18px;}
+  .etiqueta-seccion:last-child{margin-bottom:0;}
+  .etiqueta-seccion .t-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .etiqueta-seccion .etiqueta-nombre{font-size:17px;font-weight:700;color:var(--white);}
+  .etiqueta-seccion .etiqueta-linea{font-size:13.5px;color:var(--white);margin-top:2px;line-height:1.5;}
+  .etiqueta-ref{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:16px;padding-top:16px;border-top:1px dashed var(--line);
+    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);
+  }
+  .etiqueta-ref strong{color:var(--white);font-size:15px;}
   @media print{
     body *{visibility:hidden;}
     .factura-imprimible, .factura-imprimible *{visibility:visible;}
     .factura-imprimible{position:absolute;top:0;left:0;width:100%;padding:20px;}
     .no-print{display:none !important;}
+    body.imprimiendo-etiqueta .factura-imprimible, body.imprimiendo-etiqueta .factura-imprimible *{visibility:hidden;}
+    body.imprimiendo-etiqueta .etiqueta-imprimible, body.imprimiendo-etiqueta .etiqueta-imprimible *{visibility:visible;}
+    body.imprimiendo-etiqueta .etiqueta-imprimible{position:absolute;top:0;left:0;width:100%;padding:30px;}
   }
   .order-card .order-head{
     display:flex;justify-content:space-between;align-items:baseline;
@@ -3067,19 +3084,6 @@
       </tr>
     `).join('');
 
-    const plantillaEnvio =
-`REMITENTE
-Reventa.Malaga
-${configTienda.contactoEmail || ''}${configTienda.whatsapp ? ' · ' + configTienda.whatsapp : ''}
-
-DESTINATARIO
-${pedido.nombre}
-${pedido.direccion}
-
-REFERENCIA DEL PEDIDO: ${numRef}
-FECHA: ${fechaFactura}
-CONTENIDO: ${pedido.items.map(it=>`${it.cantidad}× ${it.nombre}`).join(', ')}`;
-
     modalContent.classList.add('modal-legal');
     modalContent.innerHTML = `
       <div class="factura-imprimible">
@@ -3123,12 +3127,26 @@ CONTENIDO: ${pedido.items.map(it=>`${it.cantidad}× ${it.nombre}`).join(', ')}`;
       <button class="confirm-btn no-print" id="imprimirFacturaBtn" style="margin-top:22px;">🖨️ Imprimir / Guardar como PDF</button>
 
       ${esCliente ? '' : `
-      <div class="pay-divider no-print">Plantilla de envío (rellenada automáticamente)</div>
-      <textarea id="plantillaEnvioTexto" class="plantilla-envio-box no-print" readonly>${plantillaEnvio}</textarea>
-      <div class="factura-btn-row no-print">
-        <button class="confirm-btn" id="copiarEnvioBtn" style="background:transparent;color:var(--muted);border:1px solid var(--line);">Copiar</button>
-        <button class="confirm-btn" id="descargarEnvioBtn" style="background:transparent;color:var(--muted);border:1px solid var(--line);">Descargar .txt</button>
+      <div class="pay-divider no-print">Etiqueta de envío (rellenada automáticamente)</div>
+      <div class="etiqueta-imprimible">
+        <div class="etiqueta-label">
+          <div class="etiqueta-seccion">
+            <div class="t-label">Remitente</div>
+            <div class="etiqueta-nombre">Reventa.Malaga</div>
+            <div class="etiqueta-linea">${configTienda.contactoEmail || ''}${configTienda.whatsapp ? ' · ' + configTienda.whatsapp : ''}</div>
+          </div>
+          <div class="etiqueta-seccion">
+            <div class="t-label">Destinatario</div>
+            <div class="etiqueta-nombre">${pedido.nombre}</div>
+            <div class="etiqueta-linea">${pedido.direccion}</div>
+          </div>
+          <div class="etiqueta-ref">
+            <span>Ref. pedido: <strong>${numRef}</strong></span>
+            <span>${fechaFactura}</span>
+          </div>
+        </div>
       </div>
+      <button class="confirm-btn no-print" id="imprimirEtiquetaBtn" style="margin-top:14px;">🖨️ Descargar etiqueta como PDF</button>
       `}
 
       <button class="confirm-btn no-print" id="cerrarModal" style="margin-top:14px;">Cerrar</button>
@@ -3138,22 +3156,10 @@ CONTENIDO: ${pedido.items.map(it=>`${it.cantidad}× ${it.nombre}`).join(', ')}`;
     document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
     document.getElementById('imprimirFacturaBtn').addEventListener('click', ()=> window.print());
     if(!esCliente){
-      document.getElementById('copiarEnvioBtn').addEventListener('click', ()=>{
-        const texto = document.getElementById('plantillaEnvioTexto').value;
-        navigator.clipboard.writeText(texto).then(()=>{
-          const btn = document.getElementById('copiarEnvioBtn');
-          btn.textContent = 'Copiado ✓';
-          setTimeout(()=> btn.textContent = 'Copiar', 1500);
-        }).catch(()=> alert('No se pudo copiar. Selecciona el texto a mano.'));
-      });
-      document.getElementById('descargarEnvioBtn').addEventListener('click', ()=>{
-        const texto = document.getElementById('plantillaEnvioTexto').value;
-        const blob = new Blob([texto], {type:'text/plain'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `envio-${numRef}.txt`;
-        a.click();
-        URL.revokeObjectURL(a.href);
+      document.getElementById('imprimirEtiquetaBtn').addEventListener('click', ()=>{
+        document.body.classList.add('imprimiendo-etiqueta');
+        window.print();
+        setTimeout(()=> document.body.classList.remove('imprimiendo-etiqueta'), 500);
       });
     }
   }
