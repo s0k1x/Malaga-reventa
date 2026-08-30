@@ -352,33 +352,6 @@
     white-space:nowrap;
   }
   .newsletter-msg{font-size:12.5px;font-weight:600;color:var(--accent-portada);}
-  .ruleta-wrap{position:relative;width:240px;height:240px;margin:20px auto 0;}
-  .ruleta-puntero{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:22px;color:var(--white);z-index:2;}
-  .ruleta-wheel{
-    width:240px;height:240px;border-radius:50%;position:relative;
-    border:4px solid var(--white);
-    transition:transform 4.2s cubic-bezier(.12,.67,.1,1);
-  }
-  .ruleta-label{
-    position:absolute;top:50%;left:50%;
-    font-size:10.5px;font-weight:800;color:#fff;text-align:center;width:76px;
-    text-transform:uppercase;letter-spacing:0.02em;
-    text-shadow:0 1px 3px rgba(0,0,0,0.7);
-    margin-left:-38px;margin-top:-8px;
-  }
-  .ruleta-fab{
-    position:fixed;bottom:22px;right:18px;z-index:25;
-    width:56px;height:56px;border-radius:50%;
-    background:var(--accent);color:#fff;border:none;font-size:24px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.4);
-    animation:ruletaPulso 2.4s ease-in-out infinite;
-  }
-  @keyframes ruletaPulso{
-    0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}
-  }
-  @media (prefers-reduced-motion: reduce){
-    .ruleta-fab{animation:none;}
-  }
   .tabs{
     display:flex;flex-wrap:nowrap;gap:26px;
     justify-content:flex-start;
@@ -757,7 +730,26 @@
   }
   .detalle-media img, .detalle-media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
   .detalle-media .icon-watermark{width:30%;height:30%;color:rgba(255,255,255,0.14);}
-  .detalle-media .fav-heart{top:14px;right:14px;}
+  .detalle-media .fav-heart{top:14px;right:14px;z-index:5;}
+  .carousel-track{position:absolute;inset:0;}
+  .carousel-slide{
+    position:absolute;inset:0;opacity:0;transition:opacity .25s ease;pointer-events:none;
+  }
+  .carousel-slide.active{opacity:1;pointer-events:auto;}
+  .carousel-arrow{
+    position:absolute;top:50%;transform:translateY(-50%);z-index:4;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(11,11,12,0.55);color:#fff;border:none;font-size:20px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .carousel-prev{left:10px;}
+  .carousel-next{right:10px;}
+  .carousel-dots{
+    position:absolute;bottom:12px;left:0;right:0;z-index:4;
+    display:flex;justify-content:center;gap:6px;
+  }
+  .carousel-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.4);}
+  .carousel-dot.active{background:#fff;}
   .variant-group{margin-top:16px;}
   .variant-group-label{
     font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);
@@ -1130,8 +1122,6 @@
   <div id="newsletterMsg" class="newsletter-msg" style="display:none;"></div>
 </section>
 
-<button class="ruleta-fab" id="abrirRuletaBtn" aria-label="Girar la ruleta de descuentos">🎡</button>
-
 <nav class="tabs" id="tabs"></nav>
 
 <section class="grid" id="grid"></section>
@@ -1240,6 +1230,56 @@
       return `<img src="${p.mediaURL}" alt="${p.nombre}" loading="lazy">`;
     }
     return `<span class="icon-watermark">${iconoDe(p.cat)}</span>`;
+  }
+
+  function listaMedia(p){
+    if(p.medias && p.medias.length) return p.medias;
+    if(p.mediaURL) return [{url:p.mediaURL, tipo:p.mediaTipo||'imagen'}];
+    return [];
+  }
+
+  function mediaCarouselHTML(p){
+    const lista = listaMedia(p);
+    if(lista.length===0){
+      return `<span class="icon-watermark">${iconoDe(p.cat)}</span>`;
+    }
+    const slides = lista.map((m,i) => m.tipo==='video'
+      ? `<div class="carousel-slide ${i===0?'active':''}" data-slide="${i}"><video src="${m.url}" muted loop autoplay playsinline controls></video></div>`
+      : `<div class="carousel-slide ${i===0?'active':''}" data-slide="${i}"><img src="${m.url}" alt="${p.nombre}"></div>`
+    ).join('');
+    if(lista.length === 1) return slides;
+    return `
+      <div class="carousel-track">${slides}</div>
+      <button type="button" class="carousel-arrow carousel-prev" aria-label="Foto anterior">‹</button>
+      <button type="button" class="carousel-arrow carousel-next" aria-label="Foto siguiente">›</button>
+      <div class="carousel-dots">${lista.map((m,i)=>`<span class="carousel-dot ${i===0?'active':''}" data-dot="${i}"></span>`).join('')}</div>
+    `;
+  }
+
+  function activarCarousel(container){
+    const slides = container.querySelectorAll('.carousel-slide');
+    const dots = container.querySelectorAll('.carousel-dot');
+    if(slides.length <= 1) return;
+    let actual = 0;
+    function irA(i){
+      actual = (i + slides.length) % slides.length;
+      slides.forEach((s,idx)=> s.classList.toggle('active', idx===actual));
+      dots.forEach((d,idx)=> d.classList.toggle('active', idx===actual));
+    }
+    const prevBtn = container.querySelector('.carousel-prev');
+    const nextBtn = container.querySelector('.carousel-next');
+    if(prevBtn) prevBtn.addEventListener('click', (e)=>{ e.stopPropagation(); irA(actual-1); });
+    if(nextBtn) nextBtn.addEventListener('click', (e)=>{ e.stopPropagation(); irA(actual+1); });
+    dots.forEach(d=> d.addEventListener('click', (e)=>{ e.stopPropagation(); irA(Number(d.dataset.dot)); }));
+    // Deslizar con el dedo
+    let inicioX = null;
+    container.addEventListener('touchstart', (e)=>{ inicioX = e.touches[0].clientX; }, {passive:true});
+    container.addEventListener('touchend', (e)=>{
+      if(inicioX===null) return;
+      const diff = e.changedTouches[0].clientX - inicioX;
+      if(Math.abs(diff) > 40) irA(diff > 0 ? actual-1 : actual+1);
+      inicioX = null;
+    });
   }
 
   let pedidos = [];
@@ -1448,111 +1488,6 @@
   }
   document.getElementById('footerContacto').addEventListener('click', abrirContacto);
 
-  /* ---------- Ruleta de descuentos ---------- */
-  const SEGMENTOS_RULETA = [
-    {label:'5% dto', tipo:'porcentaje', valor:5,  peso:25, color:'#7C8F5D'},
-    {label:'Sigue intentando', tipo:null, valor:0, peso:30, color:'#232326'},
-    {label:'10% dto', tipo:'porcentaje', valor:10, peso:20, color:'#3D6BD6'},
-    {label:'2€ dto', tipo:'fijo', valor:2, peso:15, color:'#A9782F'},
-    {label:'15% dto', tipo:'porcentaje', valor:15, peso:7,  color:'#D6303F'},
-    {label:'20% dto', tipo:'porcentaje', valor:20, peso:3,  color:'#F2A93B'}
-  ];
-  let yaGiroRuleta = false;
-
-  function elegirSegmentoRuleta(){
-    const totalPeso = SEGMENTOS_RULETA.reduce((s,x)=>s+x.peso,0);
-    let r = Math.random()*totalPeso;
-    for(let i=0;i<SEGMENTOS_RULETA.length;i++){
-      if(r < SEGMENTOS_RULETA[i].peso) return i;
-      r -= SEGMENTOS_RULETA[i].peso;
-    }
-    return 0;
-  }
-
-  function cerrarModalLegal(){
-    modalOverlay.classList.remove('open');
-    modalContent.classList.remove('modal-legal');
-  }
-
-  function abrirRuleta(){
-    modalContent.classList.add('modal-legal');
-    if(yaGiroRuleta){
-      modalContent.innerHTML = `
-        <h2>Ya has girado</h2>
-        <p style="color:var(--muted);font-size:13.5px;">Solo se puede girar una vez por visita. ¡Gracias por pasarte!</p>
-        <button class="confirm-btn" id="cerrarModal">Cerrar</button>
-      `;
-      modalOverlay.classList.add('open');
-      document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
-      return;
-    }
-
-    const n = SEGMENTOS_RULETA.length;
-    const seg = 360/n;
-    const gradiente = SEGMENTOS_RULETA.map((s,i)=> `${s.color} ${i*seg}deg ${(i+1)*seg}deg`).join(', ');
-
-    modalContent.innerHTML = `
-      <h2 style="text-align:center;">Gira y gana un cupón</h2>
-      <p style="color:var(--muted);font-size:13px;text-align:center;margin-top:4px;">Una vuelta por visita. ¡Suerte!</p>
-      <div class="ruleta-wrap">
-        <div class="ruleta-puntero">▼</div>
-        <div class="ruleta-wheel" id="ruletaWheel" style="background:conic-gradient(from 0deg, ${gradiente});">
-          ${SEGMENTOS_RULETA.map((s,i)=>{
-            const centro = i*seg + seg/2;
-            return `<span class="ruleta-label" style="transform:rotate(${centro}deg) translateY(-82px) rotate(${-centro}deg);">${s.label}</span>`;
-          }).join('')}
-        </div>
-      </div>
-      <button class="confirm-btn" id="girarBtn" style="margin-top:24px;">Girar la ruleta</button>
-    `;
-    modalOverlay.classList.add('open');
-
-    document.getElementById('girarBtn').addEventListener('click', ()=>{
-      const btn = document.getElementById('girarBtn');
-      btn.disabled = true;
-      btn.textContent = 'Girando…';
-      const idx = elegirSegmentoRuleta();
-      const centro = idx*seg + seg/2;
-      const rotacionFinal = (5*360) + (360 - centro);
-      document.getElementById('ruletaWheel').style.transform = `rotate(${rotacionFinal}deg)`;
-      yaGiroRuleta = true;
-
-      setTimeout(async ()=>{
-        const premio = SEGMENTOS_RULETA[idx];
-        if(!premio.tipo){
-          modalContent.innerHTML = `
-            <div class="success">
-              <h2>¡Casi! 😅</h2>
-              <p style="color:var(--muted);font-size:13.5px;">Esta vez no ha tocado premio. ¡Vuelve a pasarte pronto!</p>
-              <button class="confirm-btn" id="cerrarModal">Cerrar</button>
-            </div>`;
-          document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
-          return;
-        }
-        try{
-          const codigo = 'RULETA' + Math.floor(1000 + Math.random()*9000);
-          await db.collection('cupones').add({codigo, tipo:premio.tipo, valor:premio.valor, usosMax:1, usosActuales:0, activo:true});
-          modalContent.innerHTML = `
-            <div class="success">
-              <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
-              <h2>¡Enhorabuena!</h2>
-              <p style="color:var(--muted);font-size:13.5px;">Has ganado ${premio.label}. Tu código:</p>
-              <div class="transfer-card transfer-total" style="margin-top:10px;"><div class="t-value">${codigo}</div></div>
-              <p style="color:var(--muted);font-size:12px;margin-top:12px;">Úsalo en el checkout.</p>
-              <button class="confirm-btn" id="cerrarModal">Cerrar</button>
-            </div>`;
-        } catch(err){
-          modalContent.innerHTML = `
-            <h2>Vaya…</h2>
-            <p style="color:var(--muted);font-size:13.5px;">No se pudo generar el cupón: ${err.message}</p>
-            <button class="confirm-btn" id="cerrarModal">Cerrar</button>`;
-        }
-        document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
-      }, 4300);
-    });
-  }
-  document.getElementById('abrirRuletaBtn').addEventListener('click', abrirRuleta);
-
   /* ---------- Newsletter con cupón de bienvenida ---------- */
   document.getElementById('newsletterForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
@@ -1570,7 +1505,7 @@
         return;
       }
       const codigo = 'BIENVENIDA' + Math.floor(1000 + Math.random()*9000);
-      await db.collection('cupones').add({codigo, tipo:'porcentaje', valor:10, usosMax:1, usosActuales:0, activo:true});
+      await db.collection('cupones').add({codigo, tipo:'porcentaje', valor:10, usosMax:1, usosActuales:0, activo:true, emailAsociado: email.toLowerCase()});
       await db.collection('suscriptores').doc(email.toLowerCase()).set({
         email, codigoCupon: codigo, fecha: new Date().toLocaleString('es-ES'),
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -1670,8 +1605,8 @@
 
     modalContent.classList.add('modal-legal');
     modalContent.innerHTML = `
-      <div class="detalle-media" style="background:${tintDe(p.cat)};">
-        ${mediaHTML(p)}
+      <div class="detalle-media" id="detalleCarousel" style="background:${tintDe(p.cat)};">
+        ${mediaCarouselHTML(p)}
         <button class="fav-heart ${esFavorito ? 'active':''}" data-fav="${p.id}" aria-label="Favorito">${esFavorito ? '❤️' : '🤍'}</button>
         ${enOferta ? '<span class="offer-ribbon">Oferta</span>' : ''}
       </div>
@@ -1692,6 +1627,7 @@
       <button class="confirm-btn" id="detalleAddBtn" style="margin-top:22px;" ${sinStock ? 'disabled' : ''}>${sinStock ? 'Agotado' : 'Añadir a la bolsa'}</button>
     `;
     modalOverlay.classList.add('open');
+    activarCarousel(document.getElementById('detalleCarousel'));
 
     const seleccion = {};
     grupos.forEach((g,gi)=>{ seleccion[gi] = g.opciones[0]; });
@@ -2036,10 +1972,12 @@
   function abrirMisCupones(){
     menuItems.innerHTML = cabeceraSub('Mis cupones', 'perfil') + `<p class="menu-loading">Cargando…</p>`;
     bindMenuNav();
+    const miEmail = (auth.currentUser && auth.currentUser.email || '').toLowerCase();
     db.collection('cupones').where('activo','==',true).get().then(snapshot=>{
-      const cuponesActivos = snapshot.docs.map(d=>d.data());
+      // Solo mostramos los cupones generales de la tienda (sin dueño) y los personales que sean tuyos.
+      const cuponesActivos = snapshot.docs.map(d=>d.data()).filter(c => !c.emailAsociado || c.emailAsociado === miEmail);
       menuItems.innerHTML = cabeceraSub(`Cupones disponibles (${cuponesActivos.length})`, 'perfil') +
-        (cuponesActivos.length===0 ? `<p class="menu-loading">No hay cupones activos ahora mismo.</p>` : cuponesActivos.map(c => `
+        (cuponesActivos.length===0 ? `<p class="menu-loading">No hay cupones disponibles para ti ahora mismo.</p>` : cuponesActivos.map(c => `
           <div class="my-order-card">
             <div class="order-head"><strong class="mono" style="color:var(--white);">${c.codigo}</strong><span>${c.tipo==='porcentaje' ? c.valor+'%' : formatoPrecio(c.valor)}</span></div>
             <div style="font-size:12px;color:var(--muted);">Introduce este código en el checkout para aplicar el descuento.</div>
