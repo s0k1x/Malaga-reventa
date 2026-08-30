@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Málaga Reventa — Edición limitada</title>
+<title>Reventa.Malaga — Edición limitada</title>
 <link rel="icon" type="image/png" href="DB636764-D086-48CC-9855-FFA0F043BE60.png">
 <link rel="apple-touch-icon" href="DB636764-D086-48CC-9855-FFA0F043BE60.png">
 <!--
@@ -901,6 +901,50 @@
   .order-card{
     border:1px solid var(--line);padding:18px;margin-bottom:14px;
   }
+  .ver-factura-btn{
+    display:block;width:100%;margin-top:14px;padding:10px;
+    background:transparent;border:1px solid var(--line);color:var(--white);
+    font-size:12.5px;font-weight:600;
+  }
+  .factura-head{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--line);
+  }
+  .factura-marca{font-family:'Anton',sans-serif;font-size:20px;text-transform:uppercase;color:var(--white);}
+  .factura-sub{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .factura-num .t-label{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);text-align:right;}
+  .factura-num .t-value{font-size:15px;font-weight:700;color:var(--white);text-align:right;}
+  .factura-datos-row{
+    display:flex;justify-content:space-between;gap:16px;margin-bottom:20px;
+  }
+  .factura-datos-row .t-label{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+  .factura-cliente{font-size:13.5px;font-weight:600;color:var(--white);}
+  .factura-cliente-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .factura-tabla{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .factura-tabla th{
+    text-align:left;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);
+    padding-bottom:8px;border-bottom:1px solid var(--line);font-weight:600;
+  }
+  .factura-tabla td{padding:9px 0;border-bottom:1px solid var(--line);color:var(--white);}
+  .factura-total-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-top:14px;padding-top:14px;border-top:2px solid var(--white);
+    font-family:'Anton',sans-serif;font-size:19px;color:var(--white);
+  }
+  .plantilla-envio-box{
+    width:100%;min-height:150px;margin-top:12px;padding:14px;
+    background:var(--bg);border:1px solid var(--line);color:var(--white);
+    font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;
+    resize:vertical;
+  }
+  .factura-btn-row{display:flex;gap:10px;margin-top:10px;}
+  .factura-btn-row .confirm-btn{margin-top:0;}
+  @media print{
+    body *{visibility:hidden;}
+    .factura-imprimible, .factura-imprimible *{visibility:visible;}
+    .factura-imprimible{position:absolute;top:0;left:0;width:100%;padding:20px;}
+    .no-print{display:none !important;}
+  }
   .order-card .order-head{
     display:flex;justify-content:space-between;align-items:baseline;
     margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);
@@ -1067,7 +1111,7 @@
 <div id="introScreen">
   <div class="intro-bg"></div>
   <span class="eyebrow">Exclusividad · Málaga</span>
-  <h1>Málaga Reventa<span class="italic">piezas únicas</span></h1>
+  <h1>Reventa<span class="italic">.Malaga</span></h1>
   <p>Relojes, perfumes, ropa y complementos.</p>
   <button class="enter-btn" id="enterStore">Entrar</button>
   <div class="enter-hint"><span class="pulse"></span>Nueva selección esta semana</div>
@@ -1080,7 +1124,7 @@
     <button class="hamburger-btn" id="openMenu" aria-label="Abrir menú">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
-    <div class="logo">Málaga <span class="thin">Reventa</span></div>
+    <div class="logo">Reventa<span class="thin">.Malaga</span></div>
   </div>
   <div class="header-actions">
     <button class="cart-btn" id="openCart" aria-haspopup="dialog">
@@ -1100,7 +1144,7 @@
 
 <section class="hero">
   <span class="eyebrow">Málaga · Edición limitada</span>
-  <h1>Málaga Reventa<span class="italic">a otro precio</span></h1>
+  <h1>Reventa<span class="italic">.Malaga</span></h1>
   <div class="trust-row">
     <span class="trust-item">Vendedores verificados</span>
     <span class="trust-div"></span>
@@ -1145,7 +1189,7 @@
 </div>
 
 <footer>
-  Málaga Reventa © 2026 · Málaga, España<br>
+  Reventa.Malaga © 2026 · Málaga, España<br>
   <span id="contactoFooter"></span>
   <div class="legal-links">
     <button class="legal-link" data-doc="privacidad">Política de privacidad</button>
@@ -1590,6 +1634,11 @@
     grid.querySelectorAll('.card-open').forEach(el=>{
       el.addEventListener('click', ()=> abrirDetalleProducto(el.dataset.open));
     });
+  }
+
+  function cerrarModalLegal(){
+    modalOverlay.classList.remove('open');
+    modalContent.classList.remove('modal-legal');
   }
 
   function abrirDetalleProducto(id){
@@ -2924,6 +2973,110 @@
 
   let busquedaPedidos = '';
 
+  function abrirFacturaPedido(id){
+    const pedido = pedidos.find(p=>p.id===id);
+    if(!pedido) return;
+
+    const numRef = pedido.numeroSeguimiento || ('#' + pedido.id.slice(0,6));
+    const fechaFactura = pedido.fecha || '';
+    const estadoPago = pedido.pagado ? 'Pagado' : 'Pendiente de pago';
+
+    const filasItems = pedido.items.map(it => `
+      <tr>
+        <td>${it.nombre}</td>
+        <td style="text-align:center;">${it.cantidad}</td>
+        <td style="text-align:right;">${formatoPrecio(it.precio)}</td>
+        <td style="text-align:right;">${formatoPrecio(it.precio*it.cantidad)}</td>
+      </tr>
+    `).join('');
+
+    const plantillaEnvio =
+`REMITENTE
+Reventa.Malaga
+${configTienda.contactoEmail || ''}${configTienda.whatsapp ? ' · ' + configTienda.whatsapp : ''}
+
+DESTINATARIO
+${pedido.nombre}
+${pedido.direccion}
+
+REFERENCIA DEL PEDIDO: ${numRef}
+FECHA: ${fechaFactura}
+CONTENIDO: ${pedido.items.map(it=>`${it.cantidad}× ${it.nombre}`).join(', ')}`;
+
+    modalContent.classList.add('modal-legal');
+    modalContent.innerHTML = `
+      <div class="factura-imprimible">
+        <div class="factura-head">
+          <div>
+            <div class="factura-marca">Reventa.Malaga</div>
+            <div class="factura-sub">${configTienda.contactoEmail || ''}</div>
+          </div>
+          <div class="factura-num">
+            <div class="t-label">Nº de pedido</div>
+            <div class="t-value mono">${numRef}</div>
+          </div>
+        </div>
+
+        <div class="factura-datos-row">
+          <div>
+            <div class="t-label">Facturado a</div>
+            <div class="factura-cliente">${pedido.nombre}</div>
+            <div class="factura-cliente-sub">${pedido.email}</div>
+            <div class="factura-cliente-sub">${pedido.direccion}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="t-label">Fecha</div>
+            <div class="factura-cliente">${fechaFactura}</div>
+            <div class="t-label" style="margin-top:10px;">Estado del pago</div>
+            <div class="factura-cliente" style="color:${pedido.pagado ? 'var(--accent-portada)' : 'var(--accent)'};">${estadoPago}</div>
+          </div>
+        </div>
+
+        <table class="factura-tabla">
+          <thead><tr><th>Artículo</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Precio</th><th style="text-align:right;">Importe</th></tr></thead>
+          <tbody>${filasItems}</tbody>
+        </table>
+
+        ${pedido.cupon ? `<div style="text-align:right;font-size:12px;color:var(--muted);margin-top:8px;">Cupón aplicado: ${pedido.cupon}</div>` : ''}
+
+        <div class="factura-total-row"><span>Total</span><span>${formatoPrecio(pedido.total)}</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Método de pago: ${pedido.metodoPago || 'Manual'} · Estado del pedido: ${pedido.estado || 'Pendiente'}</div>
+      </div>
+
+      <button class="confirm-btn no-print" id="imprimirFacturaBtn" style="margin-top:22px;">🖨️ Imprimir / Guardar como PDF</button>
+
+      <div class="pay-divider no-print">Plantilla de envío (rellenada automáticamente)</div>
+      <textarea id="plantillaEnvioTexto" class="plantilla-envio-box no-print" readonly>${plantillaEnvio}</textarea>
+      <div class="factura-btn-row no-print">
+        <button class="confirm-btn" id="copiarEnvioBtn" style="background:transparent;color:var(--muted);border:1px solid var(--line);">Copiar</button>
+        <button class="confirm-btn" id="descargarEnvioBtn" style="background:transparent;color:var(--muted);border:1px solid var(--line);">Descargar .txt</button>
+      </div>
+
+      <button class="confirm-btn no-print" id="cerrarModal" style="margin-top:14px;">Cerrar</button>
+    `;
+    modalOverlay.classList.add('open');
+
+    document.getElementById('cerrarModal').addEventListener('click', cerrarModalLegal);
+    document.getElementById('imprimirFacturaBtn').addEventListener('click', ()=> window.print());
+    document.getElementById('copiarEnvioBtn').addEventListener('click', ()=>{
+      const texto = document.getElementById('plantillaEnvioTexto').value;
+      navigator.clipboard.writeText(texto).then(()=>{
+        const btn = document.getElementById('copiarEnvioBtn');
+        btn.textContent = 'Copiado ✓';
+        setTimeout(()=> btn.textContent = 'Copiar', 1500);
+      }).catch(()=> alert('No se pudo copiar. Selecciona el texto a mano.'));
+    });
+    document.getElementById('descargarEnvioBtn').addEventListener('click', ()=>{
+      const texto = document.getElementById('plantillaEnvioTexto').value;
+      const blob = new Blob([texto], {type:'text/plain'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `envio-${numRef}.txt`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  }
+
   function renderAdminPedidos(){
     if(pedidos.length===0){
       adminPedidosEl.innerHTML = `<div class="empty-admin">Todavía no hay pedidos.<br>En cuanto alguien complete una compra, aparecerá aquí.</div>`;
@@ -2952,6 +3105,7 @@
           <div class="order-line"><span>${it.cantidad}× ${it.nombre}</span><span>${formatoPrecio(it.precio*it.cantidad)}</span></div>
         `).join('')}
         <div class="order-total"><span>Total</span><span>${formatoPrecio(pedido.total)}</span></div>
+        <button class="ver-factura-btn" data-id="${pedido.id}">📄 Ver factura y etiqueta de envío</button>
         <label class="pago-check-row">
           <input type="checkbox" class="pago-check" data-id="${pedido.id}" ${pedido.pagado ? 'checked' : ''}>
           <span>${pedido.pagado ? 'Pagado ✓' : 'Marcar como pagado'}</span>
@@ -2973,6 +3127,9 @@
           alert('No se pudo actualizar: ' + err.message);
         });
       });
+    });
+    adminPedidosEl.querySelectorAll('.ver-factura-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=> abrirFacturaPedido(btn.dataset.id));
     });
     document.getElementById('pedidosBuscar').addEventListener('input', (e)=>{
       busquedaPedidos = e.target.value;
