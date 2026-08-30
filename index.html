@@ -231,6 +231,14 @@
     margin-top:12px;font-size:12px;font-weight:700;color:var(--accent);
     text-transform:uppercase;letter-spacing:0.06em;
   }
+  .pago-pendiente-aviso{
+    margin-top:12px;padding:12px 14px;
+    background:rgba(214,48,63,0.08);border:1px solid var(--accent);
+  }
+  .pago-pendiente-aviso strong{
+    display:block;font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;
+  }
+  .pago-pendiente-aviso p{margin:0;font-size:12px;color:var(--muted);line-height:1.5;}
   .login-btn{
     background:transparent;
     color:var(--muted);
@@ -629,6 +637,16 @@
     padding:12px 14px;
     line-height:1.5;
   }
+  .transfer-card{
+    background:var(--bg);border:1px solid var(--line);
+    padding:14px 16px;margin-top:12px;
+  }
+  .transfer-card .t-label{
+    font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;
+  }
+  .transfer-card .t-value{font-size:15px;font-weight:600;word-break:break-word;}
+  .transfer-total{border-color:var(--accent);}
+  .transfer-total .t-value{color:var(--accent);font-size:19px;font-family:'Anton',sans-serif;}
   .accept-terms-row{
     align-items:flex-start !important;margin-top:16px;cursor:pointer;
   }
@@ -1570,15 +1588,25 @@
       });
       menuItems.innerHTML = cabeceraSub(`Mis pedidos (${misPedidos.length})`, 'perfil') + misPedidos.map(p => `
         <div class="my-order-card">
-          <div class="order-head"><span>${p.fecha}</span><span>${formatoPrecio(p.total)}</span></div>
+          <div class="order-head"><span>${p.numeroSeguimiento || ('#' + p.id.slice(0,6))}</span><span>${formatoPrecio(p.total)}</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">${p.fecha}</div>
           ${p.items.map(it=>`<div style="font-size:12.5px;color:var(--muted);">${it.cantidad}× ${it.nombre}</div>`).join('')}
-          ${renderTrackingSteps(p.estado||'Pendiente')}
+          ${p.pagado ? renderTrackingSteps(p.estado||'Pendiente') : `
+            <div class="pago-pendiente-aviso">
+              <strong>No se ha realizado el pago todavía.</strong>
+              <p>En cuanto lo recibamos y lo revisemos, tu pedido se pondrá en marcha.</p>
+            </div>
+            <button class="report-issue-btn" data-ver-pago="${p.numeroSeguimiento||''}" data-total="${p.total}">Ver instrucciones de pago</button>
+          `}
           <button class="report-issue-btn" data-id="${p.id}">Reportar un problema</button>
         </div>
       `).join('');
       bindMenuNav();
-      menuItems.querySelectorAll('.report-issue-btn').forEach(btn=>{
+      menuItems.querySelectorAll('.report-issue-btn[data-id]').forEach(btn=>{
         btn.addEventListener('click', ()=> abrirReportarProblema(btn.dataset.id, misPedidos.find(p=>p.id===btn.dataset.id)));
+      });
+      menuItems.querySelectorAll('[data-ver-pago]').forEach(btn=>{
+        btn.addEventListener('click', ()=> mostrarDatosTransferencia(btn.dataset.verPago, parseFloat(btn.dataset.total)));
       });
     }).catch(err=>{
       menuItems.innerHTML = cabeceraSub('Mis pedidos', 'perfil') + `<p class="menu-loading" style="color:var(--accent);">No se pudieron cargar: ${err.message}</p>`;
@@ -1944,20 +1972,34 @@
     });
   }
 
-  function mostrarDatosTransferencia(pedidoId, total){
-    const ref = `MR-${pedidoId.slice(0,8).toUpperCase()}`;
-    modalContent.innerHTML = `
-      <h2>Datos para tu transferencia</h2>
-      <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:6px;">Haz la transferencia con estos datos. En cuanto la recibamos, revisaremos el pago y tu pedido se pondrá en marcha.</p>
+  function generarNumeroSeguimiento(){
+    const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin caracteres que se confundan (0/O, 1/I)
+    let codigo = '';
+    for(let i=0;i<8;i++) codigo += letras.charAt(Math.floor(Math.random()*letras.length));
+    return `MR-${codigo}`;
+  }
 
+  function mostrarDatosTransferencia(numeroSeguimiento, total){
+    modalContent.innerHTML = `
+      <h2>Datos para pagar tu pedido</h2>
+      <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:6px;">Paga por Bizum o por transferencia. En cuanto lo recibamos, revisaremos el pago y tu pedido se pondrá en marcha.</p>
+
+      <div class="transfer-card"><div class="t-label">Número de seguimiento de tu pedido</div><div class="t-value">${numeroSeguimiento}</div></div>
+      <div class="transfer-card transfer-total"><div class="t-label">Importe a pagar</div><div class="t-value">${formatoPrecio(total)}</div></div>
+
+      ${configTienda.bizumTelefono ? `
+        <div class="pay-divider">Opción 1 — Bizum</div>
+        <div class="transfer-card"><div class="t-label">Número de Bizum</div><div class="t-value">${configTienda.bizumTelefono}</div></div>
+        <div class="pay-note">Al enviar el Bizum, pon <strong style="color:var(--white);">${numeroSeguimiento}</strong> en el concepto/mensaje si tu banco lo permite.</div>
+      ` : ''}
+
+      <div class="pay-divider">Opción 2 — Transferencia bancaria</div>
       ${configTienda.titularCuenta ? `<div class="transfer-card"><div class="t-label">Titular</div><div class="t-value">${configTienda.titularCuenta}</div></div>` : ''}
       ${configTienda.iban ? `<div class="transfer-card"><div class="t-label">IBAN</div><div class="t-value">${configTienda.iban}</div></div>` : ''}
       ${configTienda.banco ? `<div class="transfer-card"><div class="t-label">Banco</div><div class="t-value">${configTienda.banco}</div></div>` : ''}
-      <div class="transfer-card"><div class="t-label">Concepto (muy importante ponerlo)</div><div class="t-value">${ref}</div></div>
+      <div class="transfer-card"><div class="t-label">Concepto (muy importante ponerlo)</div><div class="t-value">${numeroSeguimiento}</div></div>
 
-      <div class="transfer-card transfer-total"><div class="t-label">Importe a transferir</div><div class="t-value">${formatoPrecio(total)}</div></div>
-
-      <div class="pay-note">Una vez hecha la transferencia, revisaremos el pago y tu pedido se pondrá en marcha${configTienda.tiempoRespuesta ? ' (normalmente en ' + configTienda.tiempoRespuesta + ')' : ''}. ${configTienda.contactoEmail ? 'Si tienes dudas, escríbenos a ' + configTienda.contactoEmail + '.' : ''}</div>
+      <div class="pay-note">Una vez hecho el pago, revisaremos y tu pedido se pondrá en marcha${configTienda.tiempoRespuesta ? ' (normalmente en ' + configTienda.tiempoRespuesta + ')' : ''}. Guarda tu número de seguimiento — lo necesitas para ver el estado de tu pedido en el menú ☰ → Mis pedidos. ${configTienda.contactoEmail ? 'Si tienes dudas, escríbenos a ' + configTienda.contactoEmail + '.' : ''}</div>
 
       <button class="confirm-btn" id="cerrarModal">Cerrar</button>
     `;
@@ -1994,6 +2036,7 @@
     const ratio = descuento > 0 ? (subtotal - descuento) / subtotal : 1;
     const itemsConDescuento = items.map(it => ({...it, precio: Math.round(it.precio * ratio * 100) / 100}));
     const total = itemsConDescuento.reduce((sum,it)=>sum + it.precio*it.cantidad, 0);
+    const numeroSeguimiento = generarNumeroSeguimiento();
 
     const boton = document.getElementById('confirmarPago');
     boton.disabled = true;
@@ -2007,7 +2050,8 @@
         items: itemsConDescuento, total,
         cupon: cuponAplicado ? cuponAplicado.codigo : null,
         pagado: false,
-        metodoPago: 'Manual'
+        metodoPago: 'Manual',
+        numeroSeguimiento
       });
 
       if(cuponAplicado){
@@ -2016,7 +2060,7 @@
 
       carrito = {};
       actualizarCarrito();
-      mostrarDatosTransferencia(pedidoRef.id, total);
+      mostrarDatosTransferencia(numeroSeguimiento, total);
     } catch(err){
       errorEl.textContent = 'No se pudo registrar el pedido: ' + err.message;
       errorEl.style.display = 'block';
@@ -2141,7 +2185,7 @@
     console.error('Error leyendo pedidos de Firestore:', err);
   });
 
-  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: '', whatsapp: '', tiempoRespuesta: '24–48 horas laborables', titularCuenta: '', iban: '', banco: ''};
+  let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: '', whatsapp: '', tiempoRespuesta: '24–48 horas laborables', titularCuenta: 'Málaga Reventa', iban: 'ES00 0000 0000 0000 0000 0000', banco: '', bizumTelefono: '637327675'};
   db.collection('config').doc('general').onSnapshot(doc=>{
     if(doc.exists){
       configTienda = {...configTienda, ...doc.data()};
@@ -2552,25 +2596,32 @@
 
   let filtroEstadoPedidos = 'Todos';
 
+  let busquedaPedidos = '';
+
   function renderAdminPedidos(){
     if(pedidos.length===0){
       adminPedidosEl.innerHTML = `<div class="empty-admin">Todavía no hay pedidos.<br>En cuanto alguien complete una compra, aparecerá aquí.</div>`;
       return;
     }
     const filtros = ['Todos', ...ESTADOS_PEDIDO];
-    const lista = filtroEstadoPedidos === 'Todos' ? pedidos : pedidos.filter(p => (p.estado || 'Pendiente') === filtroEstadoPedidos);
+    let lista = filtroEstadoPedidos === 'Todos' ? pedidos : pedidos.filter(p => (p.estado || 'Pendiente') === filtroEstadoPedidos);
+    if(busquedaPedidos.trim()){
+      const q = busquedaPedidos.trim().toLowerCase();
+      lista = lista.filter(p => (p.numeroSeguimiento||'').toLowerCase().includes(q) || (p.nombre||'').toLowerCase().includes(q) || (p.email||'').toLowerCase().includes(q));
+    }
 
     adminPedidosEl.innerHTML = `
+      <input id="pedidosBuscar" type="text" placeholder="Buscar por nº de seguimiento, nombre o email…" class="admin-search" value="${busquedaPedidos}">
       <div class="order-filters">
         ${filtros.map(f => `<button class="order-filter-btn ${f===filtroEstadoPedidos?'active':''}" data-estado="${f}">${f}</button>`).join('')}
       </div>
-      ${lista.length===0 ? `<div class="empty-admin">No hay pedidos con ese estado.</div>` : lista.map(pedido => `
+      ${lista.length===0 ? `<div class="empty-admin">No hay pedidos que coincidan.</div>` : lista.map(pedido => `
       <div class="order-card">
         <div class="order-head">
-          <strong>${pedido.nombre}</strong>
+          <strong>${pedido.numeroSeguimiento || ('#' + pedido.id.slice(0,6))}</strong>
           <span>${pedido.fecha}</span>
         </div>
-        <div style="font-size:12px;color:var(--muted);">${pedido.email} · ${pedido.direccion}</div>
+        <div style="font-size:12px;color:var(--muted);">${pedido.nombre} · ${pedido.email} · ${pedido.direccion}</div>
         ${pedido.items.map(it => `
           <div class="order-line"><span>${it.cantidad}× ${it.nombre}</span><span>${formatoPrecio(it.precio*it.cantidad)}</span></div>
         `).join('')}
@@ -2596,6 +2647,10 @@
           alert('No se pudo actualizar: ' + err.message);
         });
       });
+    });
+    document.getElementById('pedidosBuscar').addEventListener('input', (e)=>{
+      busquedaPedidos = e.target.value;
+      renderAdminPedidos();
     });
     adminPedidosEl.querySelectorAll('.order-filter-btn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -2760,6 +2815,10 @@
           <label for="cfgBanco">Banco (opcional)</label>
           <input id="cfgBanco" type="text" value="${(configTienda.banco||'').replace(/"/g,'&quot;')}" placeholder="Ej. CaixaBank">
         </div>
+        <div class="field">
+          <label for="cfgBizum">Número de Bizum</label>
+          <input id="cfgBizum" type="text" value="${(configTienda.bizumTelefono||'').replace(/"/g,'&quot;')}" placeholder="600 000 000">
+        </div>
 
         <button class="add-btn" id="cfgGuardarBtn">Guardar configuración</button>
         <div id="cfgGuardadoMsg" style="display:none;color:var(--accent-portada);font-size:12px;font-weight:600;margin-top:10px;">Guardado ✓</div>
@@ -2773,7 +2832,8 @@
       const titularCuenta = document.getElementById('cfgTitular').value.trim();
       const iban = document.getElementById('cfgIban').value.trim();
       const banco = document.getElementById('cfgBanco').value.trim();
-      db.collection('config').doc('general').set({envioTexto, contactoEmail, whatsapp, tiempoRespuesta, titularCuenta, iban, banco}, {merge:true}).then(()=>{
+      const bizumTelefono = document.getElementById('cfgBizum').value.trim();
+      db.collection('config').doc('general').set({envioTexto, contactoEmail, whatsapp, tiempoRespuesta, titularCuenta, iban, banco, bizumTelefono}, {merge:true}).then(()=>{
         const msg = document.getElementById('cfgGuardadoMsg');
         msg.style.display = 'block';
         setTimeout(()=> msg.style.display='none', 2000);
