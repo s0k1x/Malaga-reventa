@@ -1944,48 +1944,28 @@
     });
   }
 
-  function abrirPestanaTransferencia(pedidoId, total, ventanaExistente){
+  function mostrarDatosTransferencia(pedidoId, total){
     const ref = `MR-${pedidoId.slice(0,8).toUpperCase()}`;
-    const win = ventanaExistente || window.open('', '_blank');
-    if(!win) return; // el navegador bloqueó la ventana emergente
-    win.document.write(`
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Datos para tu transferencia — Málaga Reventa</title>
-        <style>
-          body{font-family:-apple-system,Inter,sans-serif;background:#0B0B0C;color:#F5F4F1;margin:0;padding:32px 24px 60px;}
-          .box{max-width:420px;margin:0 auto;}
-          h1{font-size:22px;margin:0 0 6px;}
-          .muted{color:#9A9A97;font-size:13.5px;line-height:1.6;margin:0 0 28px;}
-          .card{background:#1A1A1D;border:1px solid #333336;padding:20px;margin-bottom:14px;}
-          .card .label{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#9A9A97;margin-bottom:6px;}
-          .card .value{font-size:17px;font-weight:600;word-break:break-word;}
-          .total{background:#1A1A1D;border:1px solid #D6303F;padding:20px;margin-bottom:24px;}
-          .total .value{color:#D6303F;font-size:22px;}
-          .note{background:#1A1A1D;border:1px solid #333336;padding:16px;font-size:13px;color:#9A9A97;line-height:1.6;}
-        </style>
-      </head>
-      <body>
-        <div class="box">
-          <h1>Datos para tu transferencia</h1>
-          <p class="muted">Haz la transferencia con estos datos. En cuanto la recibamos, revisaremos el pago y tu pedido se pondrá en marcha.</p>
+    modalContent.innerHTML = `
+      <h2>Datos para tu transferencia</h2>
+      <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:6px;">Haz la transferencia con estos datos. En cuanto la recibamos, revisaremos el pago y tu pedido se pondrá en marcha.</p>
 
-          ${configTienda.titularCuenta ? `<div class="card"><div class="label">Titular</div><div class="value">${configTienda.titularCuenta}</div></div>` : ''}
-          ${configTienda.iban ? `<div class="card"><div class="label">IBAN</div><div class="value">${configTienda.iban}</div></div>` : ''}
-          ${configTienda.banco ? `<div class="card"><div class="label">Banco</div><div class="value">${configTienda.banco}</div></div>` : ''}
-          <div class="card"><div class="label">Concepto (muy importante ponerlo)</div><div class="value">${ref}</div></div>
+      ${configTienda.titularCuenta ? `<div class="transfer-card"><div class="t-label">Titular</div><div class="t-value">${configTienda.titularCuenta}</div></div>` : ''}
+      ${configTienda.iban ? `<div class="transfer-card"><div class="t-label">IBAN</div><div class="t-value">${configTienda.iban}</div></div>` : ''}
+      ${configTienda.banco ? `<div class="transfer-card"><div class="t-label">Banco</div><div class="t-value">${configTienda.banco}</div></div>` : ''}
+      <div class="transfer-card"><div class="t-label">Concepto (muy importante ponerlo)</div><div class="t-value">${ref}</div></div>
 
-          <div class="total"><div class="label">Importe a transferir</div><div class="value">${formatoPrecio(total)}</div></div>
+      <div class="transfer-card transfer-total"><div class="t-label">Importe a transferir</div><div class="t-value">${formatoPrecio(total)}</div></div>
 
-          <div class="note">Una vez hecha la transferencia, revisaremos el pago y tu pedido se pondrá en marcha${configTienda.tiempoRespuesta ? ' (normalmente en ' + configTienda.tiempoRespuesta + ')' : ''}. ${configTienda.contactoEmail ? 'Si tienes dudas, escríbenos a ' + configTienda.contactoEmail + '.' : ''}</div>
-        </div>
-      </body>
-      </html>
-    `);
-    win.document.close();
+      <div class="pay-note">Una vez hecha la transferencia, revisaremos el pago y tu pedido se pondrá en marcha${configTienda.tiempoRespuesta ? ' (normalmente en ' + configTienda.tiempoRespuesta + ')' : ''}. ${configTienda.contactoEmail ? 'Si tienes dudas, escríbenos a ' + configTienda.contactoEmail + '.' : ''}</div>
+
+      <button class="confirm-btn" id="cerrarModal">Cerrar</button>
+    `;
+    modalOverlay.classList.add('open');
+    document.getElementById('cerrarModal').addEventListener('click', ()=>{
+      modalOverlay.classList.remove('open');
+      cerrarCarrito();
+    });
   }
 
   async function pagarManual(){
@@ -2019,14 +1999,6 @@
     boton.disabled = true;
     boton.textContent = 'Registrando pedido…';
 
-    // Abrimos la pestaña YA, en el mismo instante del toque — si esperamos a que
-    // termine de guardar en la base de datos, Safari la bloquea por no venir "directo" del clic.
-    const ventana = window.open('', '_blank');
-    if(ventana){
-      ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Preparando tu pago…</title><style>body{font-family:-apple-system,Inter,sans-serif;background:#0B0B0C;color:#9A9A97;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-size:14px;}</style></head><body>Preparando los datos de pago…</body></html>');
-      ventana.document.close();
-    }
-
     try{
       const pedidoRef = await db.collection('pedidos').add({
         fecha: new Date().toLocaleString('es-ES'),
@@ -2042,22 +2014,9 @@
         db.collection('cupones').doc(cuponAplicado.id).update({usosActuales: firebase.firestore.FieldValue.increment(1)}).catch(()=>{});
       }
 
-      abrirPestanaTransferencia(pedidoRef.id, total, ventana);
-
-      modalContent.innerHTML = `
-        <div class="success">
-          <span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
-          <h2>Pedido registrado</h2>
-          <p style="color:var(--muted);font-size:13.5px;">Se ha abierto una pestaña con los datos para hacer la transferencia. Total: ${formatoPrecio(total)}.</p>
-          <button class="confirm-btn" id="cerrarModal">Cerrar</button>
-        </div>
-      `;
       carrito = {};
       actualizarCarrito();
-      document.getElementById('cerrarModal').addEventListener('click', ()=>{
-        modalOverlay.classList.remove('open');
-        cerrarCarrito();
-      });
+      mostrarDatosTransferencia(pedidoRef.id, total);
     } catch(err){
       errorEl.textContent = 'No se pudo registrar el pedido: ' + err.message;
       errorEl.style.display = 'block';
