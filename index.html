@@ -443,10 +443,10 @@
     position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   }
   .card-visual .offer-ribbon{
-    position:absolute;top:12px;right:-30px;
+    position:absolute;top:12px;left:-30px;
     background:var(--accent);color:#fff;
     font-size:10px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;
-    padding:5px 34px;transform:rotate(35deg);
+    padding:5px 34px;transform:rotate(-35deg);
     box-shadow:0 2px 6px rgba(0,0,0,0.4);
   }
   .card-visual .video-badge{
@@ -2275,11 +2275,20 @@
       });
     }
 
-    document.getElementById('cuponAplicarBtn').addEventListener('click', ()=>{
+    document.getElementById('cuponAplicarBtn').addEventListener('click', async ()=>{
       const codigo = document.getElementById('cuponInput').value.trim().toUpperCase();
+      const emailCheckout = document.getElementById('email').value.trim().toLowerCase();
       const msg = document.getElementById('cuponMsg');
       if(!codigo){ return; }
-      db.collection('cupones').where('codigo','==',codigo).where('activo','==',true).get().then(snapshot=>{
+      if(!emailCheckout){
+        cuponAplicado = null;
+        msg.style.color = 'var(--accent)';
+        msg.textContent = 'Escribe primero tu correo, lo necesitamos para comprobar el cupón.';
+        msg.style.display = 'block';
+        return;
+      }
+      try{
+        const snapshot = await db.collection('cupones').where('codigo','==',codigo).where('activo','==',true).get();
         if(snapshot.empty){
           cuponAplicado = null;
           msg.style.color = 'var(--accent)';
@@ -2298,16 +2307,27 @@
           actualizarTotalMostrado();
           return;
         }
+        // Cupones personales (como el de bienvenida): solo valen para el correo al que se dieron.
+        // Como cada correo solo puede conseguir uno (lo comprobamos al suscribirse) y cada cupón
+        // solo se puede usar una vez (usosMax), esto ya garantiza que sea su primera compra.
+        if(c.emailAsociado && c.emailAsociado.toLowerCase() !== emailCheckout){
+          cuponAplicado = null;
+          msg.style.color = 'var(--accent)';
+          msg.textContent = 'Ese cupón está asociado a otro correo.';
+          msg.style.display = 'block';
+          actualizarTotalMostrado();
+          return;
+        }
         cuponAplicado = {id: doc.id, codigo: c.codigo, tipo: c.tipo, valor: c.valor};
         msg.style.color = 'var(--accent-portada)';
         msg.textContent = `Cupón "${c.codigo}" aplicado ✓`;
         msg.style.display = 'block';
         actualizarTotalMostrado();
-      }).catch(err=>{
+      } catch(err){
         msg.style.color = 'var(--accent)';
         msg.textContent = 'No se pudo comprobar el cupón: ' + err.message;
         msg.style.display = 'block';
-      });
+      }
     });
 
     document.querySelectorAll('.inline-legal-link').forEach(btn=>{
@@ -2597,11 +2617,45 @@
     console.error('Error leyendo productos de Firestore:', err);
   });
 
-  db.collection('pedidos').orderBy('timestamp','desc').onSnapshot(snapshot=>{
-    pedidos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-    if(adminScreen.classList.contains('visible')) { renderAdminPedidos(); renderAdminEstadisticas(); renderAdminResumen(); }
-  }, err=>{
-    console.error('Error leyendo pedidos de Firestore:', err);
+  const HORAS_LIMITE_PEDIDO_SIN_PAGAR = 72;
+
+  async function cancelarPedidosSinPagarCaducados(){
+    if(!auth.currentUser || auth.currentUser.email !== OWNER_EMAIL) return; // solo pasa con el panel de propietario abierto
+    const ahora = Date.now();
+    const candidatos = pedidos.filter(p=>{
+      if(p.pagado || p.stockRestaurado || p.estado === 'Cancelado') return false;
+      if(!p.timestamp || !p.timestamp.toDate) return false;
+      const horas = (ahora - p.timestamp.toDate().getTime()) / 3600000;
+      return horas >= HORAS_LIMITE_PEDIDO_SIN_PAGAR;
+    });
+    for(const pedido of candidatos){
+      try{
+        await db.runTransaction(async (tx)=>{
+          await restaurarStockDePedido(pedido, tx, db);
+          tx.update(db.collection('pedidos').doc(pedido.id), {estado: 'Cancelado', stockRestaurado: true});
+        });
+      } catch(err){
+        console.error('No se pudo caducar el pedido ' + pedido.id + ':', err);
+      }
+    }
+  }
+
+  let pedidosListenerActivo = false;
+  function activarListenerPedidos(){
+    if(pedidosListenerActivo) return; // no lo dupliques si ya está en marcha
+    pedidosListenerActivo = true;
+    db.collection('pedidos').orderBy('timestamp','desc').onSnapshot(snapshot=>{
+      pedidos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+      if(adminScreen.classList.contains('visible')) { renderAdminPedidos(); renderAdminEstadisticas(); renderAdminResumen(); }
+      cancelarPedidosSinPagarCaducados();
+    }, err=>{
+      console.error('Error leyendo pedidos de Firestore:', err);
+    });
+  }
+  // Este listener lee TODOS los pedidos, y tus reglas de Firestore solo dejan
+  // hacer eso al propietario — así que solo lo activamos cuando entras tú.
+  auth.onAuthStateChanged(user=>{
+    if(user && user.email === OWNER_EMAIL) activarListenerPedidos();
   });
 
   let configTienda = {envioTexto: 'Envío en 1–2 semanas', contactoEmail: '', whatsapp: '', tiempoRespuesta: '24–48 horas laborables', bizumTelefono: '637327675'};
@@ -3164,6 +3218,22 @@
     }
   }
 
+  async function restaurarStockDePedido(pedido, tx, dbRef){
+    const cantidadPorProducto = {};
+    (pedido.items||[]).forEach(it=>{
+      if(!it.productoId) return;
+      cantidadPorProducto[it.productoId] = (cantidadPorProducto[it.productoId]||0) + it.cantidad;
+    });
+    if(Object.keys(cantidadPorProducto).length===0) return;
+    const refs = Object.keys(cantidadPorProducto).map(id => dbRef.collection('productos').doc(id));
+    const docs = await Promise.all(refs.map(ref => tx.get(ref)));
+    docs.forEach((doc, i)=>{
+      if(doc.exists && doc.data().stock != null){
+        tx.update(refs[i], {stock: doc.data().stock + cantidadPorProducto[refs[i].id]});
+      }
+    });
+  }
+
   function renderAdminPedidos(){
     if(pedidos.length===0){
       adminPedidosEl.innerHTML = `<div class="empty-admin">Todavía no hay pedidos.<br>En cuanto alguien complete una compra, aparecerá aquí.</div>`;
@@ -3234,19 +3304,8 @@
         const datosUpdate = {estado: sel.value};
         try{
           if(sel.value === 'Cancelado' && pedido && !pedido.stockRestaurado){
-            const cantidadPorProducto = {};
-            (pedido.items||[]).forEach(it=>{
-              if(!it.productoId) return;
-              cantidadPorProducto[it.productoId] = (cantidadPorProducto[it.productoId]||0) + it.cantidad;
-            });
             await db.runTransaction(async (tx)=>{
-              const refs = Object.keys(cantidadPorProducto).map(id => db.collection('productos').doc(id));
-              const docs = await Promise.all(refs.map(ref => tx.get(ref)));
-              docs.forEach((doc, i)=>{
-                if(doc.exists && doc.data().stock != null){
-                  tx.update(refs[i], {stock: doc.data().stock + cantidadPorProducto[refs[i].id]});
-                }
-              });
+              await restaurarStockDePedido(pedido, tx, db);
               tx.update(db.collection('pedidos').doc(pedido.id), {...datosUpdate, stockRestaurado: true});
             });
           } else {
@@ -3258,11 +3317,21 @@
       });
     });
     adminPedidosEl.querySelectorAll('.order-delete-btn').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
+      btn.addEventListener('click', async ()=>{
         if(!confirm('¿Eliminar este pedido? No se puede deshacer.')) return;
-        db.collection('pedidos').doc(btn.dataset.id).delete().catch(err=>{
+        const pedido = pedidos.find(p=>p.id===btn.dataset.id);
+        try{
+          if(pedido && !pedido.pagado && !pedido.stockRestaurado){
+            await db.runTransaction(async (tx)=>{
+              await restaurarStockDePedido(pedido, tx, db);
+              tx.delete(db.collection('pedidos').doc(pedido.id));
+            });
+          } else {
+            await db.collection('pedidos').doc(btn.dataset.id).delete();
+          }
+        } catch(err){
           alert('No se pudo eliminar el pedido: ' + err.message);
-        });
+        }
       });
     });
   }
