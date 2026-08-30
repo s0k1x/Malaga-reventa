@@ -1944,9 +1944,9 @@
     });
   }
 
-  function abrirPestanaTransferencia(pedidoId, total){
+  function abrirPestanaTransferencia(pedidoId, total, ventanaExistente){
     const ref = `MR-${pedidoId.slice(0,8).toUpperCase()}`;
-    const win = window.open('', '_blank');
+    const win = ventanaExistente || window.open('', '_blank');
     if(!win) return; // el navegador bloqueó la ventana emergente
     win.document.write(`
       <!DOCTYPE html>
@@ -2019,6 +2019,14 @@
     boton.disabled = true;
     boton.textContent = 'Registrando pedido…';
 
+    // Abrimos la pestaña YA, en el mismo instante del toque — si esperamos a que
+    // termine de guardar en la base de datos, Safari la bloquea por no venir "directo" del clic.
+    const ventana = window.open('', '_blank');
+    if(ventana){
+      ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Preparando tu pago…</title><style>body{font-family:-apple-system,Inter,sans-serif;background:#0B0B0C;color:#9A9A97;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-size:14px;}</style></head><body>Preparando los datos de pago…</body></html>');
+      ventana.document.close();
+    }
+
     try{
       const pedidoRef = await db.collection('pedidos').add({
         fecha: new Date().toLocaleString('es-ES'),
@@ -2034,7 +2042,7 @@
         db.collection('cupones').doc(cuponAplicado.id).update({usosActuales: firebase.firestore.FieldValue.increment(1)}).catch(()=>{});
       }
 
-      abrirPestanaTransferencia(pedidoRef.id, total);
+      abrirPestanaTransferencia(pedidoRef.id, total, ventana);
 
       modalContent.innerHTML = `
         <div class="success">
