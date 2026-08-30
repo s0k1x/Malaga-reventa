@@ -293,15 +293,26 @@
     overflow:hidden;
     border-bottom:1px solid var(--line);
   }
+  .hero-bg{
+    position:absolute;inset:0;
+    background-image:url('B72FD798-C557-480F-8A18-25030A019104.png');
+    background-size:cover;
+    background-position:center;
+    filter:blur(3px);
+    opacity:0.75;
+    z-index:0;
+  }
   .hero::before{
     content:"";
     position:absolute;inset:0;
     background:
       radial-gradient(ellipse 60% 50% at 50% 0%, rgba(61,107,214,0.16), transparent 60%),
-      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,255,255,0.04), transparent 70%);
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,255,255,0.04), transparent 70%),
+      linear-gradient(180deg, rgba(11,11,12,0.35) 0%, rgba(11,11,12,0.5) 55%, rgba(11,11,12,0.75) 100%);
+    z-index:1;
     pointer-events:none;
   }
-  .hero > *{position:relative;z-index:1;}
+  .hero > *{position:relative;z-index:2;}
   .hero .eyebrow{margin-bottom:22px;display:block;}
   .hero h1{
     font-size:clamp(38px,9vw,84px);
@@ -1134,6 +1145,7 @@
 </aside>
 
 <section class="hero">
+  <div class="hero-bg"></div>
   <span class="eyebrow">Málaga · Edición limitada</span>
   <h1>Reventa<span class="brand-dot">.Malaga</span></h1>
   <div class="trust-row">
